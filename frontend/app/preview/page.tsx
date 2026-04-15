@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 export default function PreviewPage() {
   const searchParams = useSearchParams();
-  const fileName = searchParams.get("file") || "untitled-file.wav";
+  const fileName = searchParams.get("file") || "FILENAME.wav";
 
   return (
     <main className="min-h-screen bg-[#0a0a0d] text-white">
@@ -19,129 +19,184 @@ export default function PreviewPage() {
           </button>
         </header>
 
-        <section className="flex flex-1 flex-col justify-center py-10 lg:py-14">
-          <div className="mx-auto w-full max-w-4xl text-center">
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/38">
-              Preview
-            </p>
-
-            <h1 className="mt-5 text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[56px]">
-              Your restored preview is ready
-            </h1>
-
-            <p className="mt-5 text-base leading-7 text-white/58 sm:text-[17px]">
-              Compare the before and after preview, then unlock the full export when you are ready.
-            </p>
-          </div>
-
-          <div className="mx-auto mt-10 grid w-full max-w-5xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/35">
-                File
-              </p>
-              <p className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                {fileName}
-              </p>
-              <p className="mt-4 text-sm leading-7 text-white/50 sm:text-base">
-                This is a short restored preview. The full file will be available after credit usage.
+        <section className="flex flex-1 flex-col items-center py-12 lg:py-16">
+          <div className="w-full max-w-5xl">
+            <div className="text-center">
+              <p className="text-sm font-medium uppercase tracking-[0.28em] text-white/40">
+                Preview
               </p>
 
-              <div className="mt-8 space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white">Before</p>
-                      <p className="mt-1 text-xs text-white/35">Original separated audio</p>
-                    </div>
-                    <span className="text-xs text-white/30">01:00</span>
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-sm text-white">
-                      ▶
-                    </div>
-                    <div className="grid flex-1 grid-cols-12 gap-1">
-                      <div className="h-8 rounded-full bg-white/10" />
-                      <div className="h-8 rounded-full bg-white/5" />
-                      <div className="h-8 rounded-full bg-white/10" />
-                      <div className="h-8 rounded-full bg-white/5" />
-                      <div className="h-8 rounded-full bg-white/10" />
-                      <div className="h-8 rounded-full bg-white/5" />
-                      <div className="h-8 rounded-full bg-white/10" />
-                      <div className="h-8 rounded-full bg-white/5" />
-                      <div className="h-8 rounded-full bg-white/10" />
-                      <div className="h-8 rounded-full bg-white/5" />
-                      <div className="h-8 rounded-full bg-white/10" />
-                      <div className="h-8 rounded-full bg-white/5" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white">After</p>
-                      <p className="mt-1 text-xs text-white/35">Soundfix restored preview</p>
-                    </div>
-                    <span className="text-xs text-white/30">01:00</span>
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-sm text-white">
-                      ▶
-                    </div>
-                    <div className="grid flex-1 grid-cols-12 gap-1">
-                      <div className="h-8 rounded-full bg-white/20" />
-                      <div className="h-8 rounded-full bg-white/8" />
-                      <div className="h-8 rounded-full bg-white/20" />
-                      <div className="h-8 rounded-full bg-white/8" />
-                      <div className="h-8 rounded-full bg-white/20" />
-                      <div className="h-8 rounded-full bg-white/8" />
-                      <div className="h-8 rounded-full bg-white/20" />
-                      <div className="h-8 rounded-full bg-white/8" />
-                      <div className="h-8 rounded-full bg-white/20" />
-                      <div className="h-8 rounded-full bg-white/8" />
-                      <div className="h-8 rounded-full bg-white/20" />
-                      <div className="h-8 rounded-full bg-white/8" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <h1 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-white sm:text-5xl lg:text-[56px]">
+                Your restored preview is ready
+              </h1>
             </div>
 
-            <div className="flex flex-col gap-6">
-              <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-                <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/35">
-                  Next step
-                </p>
-                <p className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                  Unlock the full restored export
-                </p>
-                <p className="mt-4 text-sm leading-7 text-white/50 sm:text-base">
-                  If the preview sounds right, continue to the export step and use credits for the full download.
-                </p>
+            <div className="mt-16">
+              <p className="text-[15px] font-medium uppercase tracking-[0.08em] text-white/80">
+                {fileName}
+              </p>
 
-                <div className="mt-8 flex flex-col gap-3">
-                  <button className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90">
-                    Use credits and continue
-                  </button>
+              <div className="mt-10 space-y-10">
+                <div>
+                  <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
+                    Before
+                  </p>
+                  <p className="mt-2 text-base text-white/72">
+                    Original separated audio
+                  </p>
 
-                  <Link
-                    href="/"
-                    className="rounded-full border border-white/15 px-6 py-3 text-center text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/5"
-                  >
-                    Back
-                  </Link>
+                  <div className="mt-5 flex items-center gap-6">
+                    <button className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90">
+                      ▶
+                    </button>
+
+                    <div className="flex flex-1 items-center gap-[5px]">
+                      <div className="h-3 w-1.5 rounded-full bg-white/65" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/90" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/70" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/80" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/65" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/78" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/82" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/72" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/62" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/96" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/84" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/65" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/82" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/94" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/86" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/75" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/64" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/64" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/82" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/94" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/86" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/63" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/60" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/84" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/96" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/88" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/78" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/64" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-3 w-1.5 rounded-full bg-white/54" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/74" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/86" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/80" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/90" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/96" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/84" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/68" />
+                      <div className="h-3 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/72" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/90" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/76" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/66" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
+                    After
+                  </p>
+                  <p className="mt-2 text-base text-white/72">
+                    Soundfix restored preview
+                  </p>
+
+                  <div className="mt-5 flex items-center gap-6">
+                    <button className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90">
+                      ▶
+                    </button>
+
+                    <div className="flex flex-1 items-center gap-[5px]">
+                      <div className="h-3 w-1.5 rounded-full bg-white/65" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/90" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/70" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/80" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/65" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/78" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/82" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/72" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/62" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/96" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/84" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/65" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/82" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/94" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/86" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/75" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/64" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/64" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/82" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/94" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/86" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/63" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/60" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/84" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/96" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/88" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/78" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/64" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-3 w-1.5 rounded-full bg-white/54" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/74" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/86" />
+                      <div className="h-12 w-1.5 rounded-full bg-white/80" />
+                      <div className="h-11 w-1.5 rounded-full bg-white/90" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/96" />
+                      <div className="h-6 w-1.5 rounded-full bg-white/84" />
+                      <div className="h-4 w-1.5 rounded-full bg-white/68" />
+                      <div className="h-3 w-1.5 rounded-full bg-white/58" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/72" />
+                      <div className="h-8 w-1.5 rounded-full bg-white/90" />
+                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
+                      <div className="h-9 w-1.5 rounded-full bg-white/76" />
+                      <div className="h-7 w-1.5 rounded-full bg-white/66" />
+                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-                <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/35">
-                  Preview policy
-                </p>
-                <p className="mt-4 text-sm leading-7 text-white/50 sm:text-base">
-                  Preview length, credit usage, and final download controls will be connected in the next step.
-                </p>
+              <div className="mt-16 flex justify-end">
+                <button className="rounded-full bg-white px-8 py-3 text-base font-medium text-black transition hover:opacity-90">
+                  Unlock the full restored export
+                </button>
+              </div>
+
+              <div className="mt-8 flex justify-start">
+                <Link
+                  href="/"
+                  className="text-sm text-white/45 transition hover:text-white/70"
+                >
+                  Back
+                </Link>
               </div>
             </div>
           </div>
