@@ -91,118 +91,103 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="grid gap-6 pb-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="grid gap-6 pb-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
             <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/35">
               Demo preview
             </p>
             <h3 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-              Hear the kind of change users should expect
+              Hear the difference first
             </h3>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-white/55 sm:text-base">
-              Before and after examples should help users understand the value of
-              restoration before they upload anything.
+            <p className="mt-4 max-w-lg text-sm leading-7 text-white/50 sm:text-base">
+              A short before and after example helps users understand the value before uploading.
             </p>
 
-            <div className="mt-8 space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+            <div className="mt-8 space-y-3">
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-white">Before</p>
-                    <p className="mt-1 text-xs text-white/40">Separated vocal</p>
+                    <p className="mt-1 text-xs text-white/35">Separated vocal</p>
                   </div>
-                  <span className="text-xs text-white/35">00:59</span>
+                  <span className="text-xs text-white/30">00:59</span>
                 </div>
+
                 <div className="mt-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-sm font-semibold text-black">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-sm text-white">
                     ▶
                   </div>
                   <div className="grid flex-1 grid-cols-12 gap-1">
-                    <div className="h-9 rounded-full bg-white/10" />
-                    <div className="h-9 rounded-full bg-white/5" />
-                    <div className="h-9 rounded-full bg-white/10" />
-                    <div className="h-9 rounded-full bg-white/5" />
-                    <div className="h-9 rounded-full bg-white/10" />
-                    <div className="h-9 rounded-full bg-white/5" />
-                    <div className="h-9 rounded-full bg-white/10" />
-                    <div className="h-9 rounded-full bg-white/5" />
-                    <div className="h-9 rounded-full bg-white/10" />
-                    <div className="h-9 rounded-full bg-white/5" />
-                    <div className="h-9 rounded-full bg-white/10" />
-                    <div className="h-9 rounded-full bg-white/5" />
+                    <div className="h-8 rounded-full bg-white/10" />
+                    <div className="h-8 rounded-full bg-white/5" />
+                    <div className="h-8 rounded-full bg-white/10" />
+                    <div className="h-8 rounded-full bg-white/5" />
+                    <div className="h-8 rounded-full bg-white/10" />
+                    <div className="h-8 rounded-full bg-white/5" />
+                    <div className="h-8 rounded-full bg-white/10" />
+                    <div className="h-8 rounded-full bg-white/5" />
+                    <div className="h-8 rounded-full bg-white/10" />
+                    <div className="h-8 rounded-full bg-white/5" />
+                    <div className="h-8 rounded-full bg-white/10" />
+                    <div className="h-8 rounded-full bg-white/5" />
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[#f4d029]/30 bg-[#f4d029]/10 p-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-white">After</p>
-                    <p className="mt-1 text-xs text-white/50">Soundfix restored</p>
+                    <p className="mt-1 text-xs text-white/35">Soundfix restored</p>
                   </div>
-                  <span className="text-xs text-white/40">00:59</span>
+                  <span className="text-xs text-white/30">00:59</span>
                 </div>
+
                 <div className="mt-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f4d029] text-sm font-semibold text-black">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-sm text-white">
                     ▶
                   </div>
                   <div className="grid flex-1 grid-cols-12 gap-1">
-                    <div className="h-9 rounded-full bg-[#f4d029]/70" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/35" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/70" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/35" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/70" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/35" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/70" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/35" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/70" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/35" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/70" />
-                    <div className="h-9 rounded-full bg-[#f4d029]/35" />
+                    <div className="h-8 rounded-full bg-white/20" />
+                    <div className="h-8 rounded-full bg-white/8" />
+                    <div className="h-8 rounded-full bg-white/20" />
+                    <div className="h-8 rounded-full bg-white/8" />
+                    <div className="h-8 rounded-full bg-white/20" />
+                    <div className="h-8 rounded-full bg-white/8" />
+                    <div className="h-8 rounded-full bg-white/20" />
+                    <div className="h-8 rounded-full bg-white/8" />
+                    <div className="h-8 rounded-full bg-white/20" />
+                    <div className="h-8 rounded-full bg-white/8" />
+                    <div className="h-8 rounded-full bg-white/20" />
+                    <div className="h-8 rounded-full bg-white/8" />
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className="grid gap-6">
             <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <p className="text-xl font-semibold tracking-tight text-white">
-                Cleaner separation results
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/35">
+                What it does
               </p>
-              <p className="mt-4 text-sm leading-7 text-white/55 sm:text-base">
-                Fix brittle upper mids, smeared details, and thin-sounding vocals
-                after extraction.
+              <p className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                Restore clarity lost during separation
+              </p>
+              <p className="mt-4 max-w-xl text-sm leading-7 text-white/50 sm:text-base">
+                Soundfix is built to improve degraded extracted audio and make it more usable for production.
               </p>
             </div>
 
             <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <p className="text-xl font-semibold tracking-tight text-white">
-                Preview before using credits
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/35">
+                Workflow
               </p>
-              <p className="mt-4 text-sm leading-7 text-white/55 sm:text-base">
-                Let users hear a short restored result first, then unlock the full
-                export when they want the complete file.
+              <p className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                Upload, preview, unlock full export
               </p>
-            </div>
-
-            <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <p className="text-xl font-semibold tracking-tight text-white">
-                Built for DJs and producers
-              </p>
-              <p className="mt-4 text-sm leading-7 text-white/55 sm:text-base">
-                Designed for remix workflows, bootlegs, mashups, edits, and any
-                production process that depends on extracted stems.
-              </p>
-            </div>
-
-            <div className="rounded-[32px] border border-white/10 bg-white/[0.02] p-6 sm:p-8">
-              <p className="text-xl font-semibold tracking-tight text-white">
-                Simple credit-based flow
-              </p>
-              <p className="mt-4 text-sm leading-7 text-white/55 sm:text-base">
-                Upload, preview, spend credits, and download the final restored
-                version in a clean step-by-step experience.
+              <p className="mt-4 max-w-xl text-sm leading-7 text-white/50 sm:text-base">
+                Users can hear a short restored preview first, then use credits only when they want the final file.
               </p>
             </div>
           </div>
