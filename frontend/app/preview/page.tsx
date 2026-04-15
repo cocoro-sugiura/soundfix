@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function PreviewPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const fileName = searchParams.get("file") || "FILENAME.wav";
+
+  const handleContinueToDownload = () => {
+    router.push(`/download?file=${encodeURIComponent(fileName)}`);
+  };
 
   return (
     <main className="min-h-screen bg-[#0a0a0d] text-white">
@@ -185,7 +190,11 @@ export default function PreviewPage() {
               </div>
 
               <div className="mt-16 flex justify-end">
-                <button className="rounded-full bg-white px-8 py-3 text-base font-medium text-black transition hover:opacity-90">
+                <button
+                  type="button"
+                  onClick={handleContinueToDownload}
+                  className="rounded-full bg-white px-8 py-3 text-base font-medium text-black transition hover:opacity-90"
+                >
                   Unlock the full restored export
                 </button>
               </div>
