@@ -1,8 +1,10 @@
 "use client";
 
 import { ChangeEvent, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
 
@@ -19,6 +21,14 @@ export default function Home() {
     }
 
     setSelectedFileName(file.name);
+  };
+
+  const handleContinueToPreview = () => {
+    if (!selectedFileName) {
+      return;
+    }
+
+    router.push(`/preview?file=${encodeURIComponent(selectedFileName)}`);
   };
 
   return (
@@ -80,6 +90,10 @@ export default function Home() {
 
               <button
                 type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleContinueToPreview();
+                }}
                 disabled={!selectedFileName}
                 className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
