@@ -1,11 +1,16 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-export default function DownloadPage() {
-  const searchParams = useSearchParams();
-  const fileName = searchParams.get("file") || "FILENAME.wav";
+type DownloadPageProps = {
+  searchParams?: Promise<{
+    file?: string;
+  }>;
+};
+
+export default async function DownloadPage({
+  searchParams,
+}: DownloadPageProps) {
+  const params = await searchParams;
+  const fileName = params?.file || "FILENAME.wav";
 
   return (
     <main className="min-h-screen bg-[#0a0a0d] text-white">
