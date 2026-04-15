@@ -18,7 +18,7 @@ export default function PreviewPageClient({
 
   return (
     <main className="min-h-screen bg-[#0a0a0d] text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-[1280px] flex-col px-5 py-5 sm:px-8 lg:px-10">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-5 py-5 sm:px-8 lg:px-10">
         <header className="flex items-center justify-between border-b border-white/10 pb-5">
           <Link href="/" className="text-xl font-semibold tracking-tight">
             Soundfix
@@ -28,20 +28,20 @@ export default function PreviewPageClient({
           </button>
         </header>
 
-        <section className="flex flex-1 flex-col items-center py-12 lg:py-16">
-          <div className="w-full max-w-5xl">
+        <section className="flex flex-1 flex-col items-center py-10 lg:py-14">
+          <div className="w-full max-w-[980px]">
             <div className="text-center">
-              <p className="text-sm font-medium uppercase tracking-[0.28em] text-white/40">
+              <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/38">
                 Preview
               </p>
 
-              <h1 className="mt-5 text-4xl font-medium leading-tight tracking-tight text-white sm:text-5xl lg:text-[56px]">
+              <h1 className="mt-5 text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[56px]">
                 Your restored preview is ready
               </h1>
             </div>
 
-            <div className="mt-16">
-              <p className="text-[15px] font-medium uppercase tracking-[0.08em] text-white/80">
+            <div className="mt-14">
+              <p className="text-[14px] font-medium uppercase tracking-[0.08em] text-white/78">
                 {fileName}
               </p>
 
@@ -193,17 +193,17 @@ export default function PreviewPageClient({
                 </div>
               </div>
 
-              <div className="mt-16 flex justify-end">
+              <div className="mt-14 flex justify-end">
                 <button
                   type="button"
                   onClick={handleContinueToDownload}
-                  className="rounded-full bg-white px-8 py-3 text-base font-medium text-black transition hover:opacity-90"
+                  className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90"
                 >
                   Unlock the full restored export
                 </button>
               </div>
 
-              <div className="mt-8 flex justify-start">
+              <div className="mt-7 flex justify-start">
                 <Link
                   href="/"
                   className="text-sm text-white/45 transition hover:text-white/70"
