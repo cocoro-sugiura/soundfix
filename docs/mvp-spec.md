@@ -1,154 +1,153 @@
-# Soundfix MVP Specification
+# Soundfix MVP仕様
 
-## 1. Product Goal
-Soundfix is an AI-powered tool that restores audio quality of degraded vocals and stems after separation.
+## 1. プロダクトの目的
+Soundfixは、ボーカル抽出やステム分離によって劣化した音源をAIで修復し、実用レベルまで引き上げるツールである。
 
-The goal of the MVP is:
-- Turn unusable separated audio into usable material
-- Improve clarity, presence, and overall quality
-- Provide a fast and simple restoration workflow
+MVPの目的は以下：
+- 使えない音源を「使える音」にする
+- 音の明瞭さ・厚み・存在感を改善する
+- シンプルかつ高速な修復体験を提供する
 
 ---
 
-## 2. Target Users
-Primary users:
+## 2. 対象ユーザー
+主なターゲット：
 - DJs
-- Music producers
-- Remixers
-- Creators using extracted vocals or stems
+- 音楽プロデューサー
+- リミキサー
+- ボーカル抽出・ステム分離を使うクリエイター
 
-These users typically:
-- Use stem separation tools
-- Experience quality loss after extraction
-- Need quick, usable results for production
-
----
-
-## 3. Input
-Supported input for MVP:
-
-- File type:
-  - WAV (recommended)
-  - MP3 (supported)
-
-- Audio type:
-  - Separated vocals
-  - Separated stems (any instrument)
-
-- File upload:
-  - Single file only (no batch processing)
+特徴：
+- 分離後の音質劣化に悩んでいる
+- DAWでの修復作業に時間がかかっている
+- すぐ使える音源を求めている
 
 ---
 
-## 4. Output
-The system returns:
+## 3. 入力
 
-- Restored audio file (WAV)
-- Before / After playback comparison
-- Downloadable processed file
+対応フォーマット：
+- WAV（推奨）
+- MP3（対応）
 
----
+対応音源：
+- 分離済みボーカル
+- 分離済みステム（楽器含む）
 
-## 5. MVP Features
-
-### Core Features
-- File upload
-- AI-based audio restoration
-- Before / After preview
-- Download restored file
-
-### Restoration Focus
-- Artifact reduction (separation noise, phasing, digital artifacts)
-- High-frequency reconstruction
-- Harmonic enhancement (body and presence)
-- Overall clarity improvement
-
-### Account System (Minimal)
-
-- Optional user signup / login
-- Required only for downloading processed files
-- Basic file history (user can access previous files)
+制限：
+- 単一ファイルのみ（MVPでは複数不可）
 
 ---
 
-## 6. Not Included in MVP
+## 4. 出力
 
-The following features are intentionally excluded:
-
-- Stem separation
-- Chat or AI assistant interface
-- Manual EQ or editing tools
-- Advanced parameter controls
-- Multi-track or batch processing
-- DAW-like interface
+提供するもの：
+- 修復済み音源（WAV）
+- Before / After 試聴
+- ダウンロード機能
 
 ---
 
-## 7. User Flow
+## 5. MVP機能
 
-The entire experience should be completed in 4 steps:
+### コア機能
+- 音源アップロード
+- AIによる音質修復
+- Before / After 比較再生
+- 修復音源のダウンロード
 
-1. Upload audio file  
-2. Click "Fix"  
-3. Listen to Before / After  
-4. Download restored file  
-
-The process should be:
-- Fast
-- Simple
-- No learning required
-
----
-
-## 8. UX Principles
-
-- One-page interface only
-- Minimal controls
-- Clear call-to-action ("Fix")
-- Immediate feedback
-- Focus on result, not complexity
+### 修復内容
+- アーティファクト除去（シャリ音・位相ズレなど）
+- 高域の再構築
+- 倍音補完（厚み・存在感の改善）
+- 全体の明瞭度向上
 
 ---
 
-## 9. Success Criteria
+## 6. MVPに含めない機能
 
-The MVP is successful if:
+以下は意図的に除外：
 
-- Users understand how to use it instantly
-- The difference between before and after is clearly noticeable
-- The restored audio is considered "usable" in production
-- The workflow feels faster than manual fixing in a DAW
-
----
-
-## 10. Positioning
-
-Soundfix is NOT:
-- A stem separation tool
-- A DAW
-- A multi-purpose audio editor
-
-Soundfix IS:
-- A post-processing AI tool
-- A restoration engine for degraded audio
-- A solution for fixing separated stems
+- ステム分離機能
+- チャット機能
+- EQや手動編集機能
+- 詳細パラメータ調整
+- 複数ファイル処理
+- DAWのようなUI
+- 複雑なダッシュボード
 
 ---
 
-## 11. Future Direction (Post-MVP)
+## 7. アカウント機能（最小構成）
 
-Phase 2:
-- Improved restoration quality
-- Faster processing
-- Better comparison tools
+- ログイン / サインアップ（任意）
+- ダウンロード時にログイン要求
+- 自分のファイル履歴にアクセス可能
 
-Phase 3:
-- Optional integration with stem separation
-- Expanded model for different audio types
-- Workflow optimization for producers
+※最初からログイン強制はしない
 
 ---
 
-## 12. Core Concept
+## 8. ユーザーフロー
 
-"Make broken stems usable again."
+1. 音源をアップロード  
+2. Fixボタンを押す  
+3. Before / Afterを聴く  
+4. ダウンロード  
+
+必要な場合のみログイン
+
+---
+
+## 9. UX設計方針
+
+- 1画面完結
+- 操作は最小限
+- 説明不要で使える
+- 結果重視（プロセスは隠す）
+- Fixボタンを中心に設計
+
+---
+
+## 10. 成功条件
+
+以下を満たせば成功：
+
+- 初見で使い方が理解できる
+- Before / Afterの違いが明確
+- 「使える音」と感じられる
+- DAWでの作業時間が短縮される
+
+---
+
+## 11. ポジショニング
+
+Soundfixは：
+
+❌ 分離ツールではない  
+❌ DAWではない  
+❌ 多機能編集ツールではない  
+
+✅ 分離後音源の修復ツール  
+✅ AIによる音質復元エンジン  
+✅ 使えない音を使える音にするツール  
+
+---
+
+## 12. 今後の方向性
+
+Phase 2：
+- 修復精度の向上
+- 処理速度の改善
+- 比較UIの強化
+
+Phase 3：
+- 分離との統合
+- 音源タイプ別最適化
+- ワークフロー改善
+
+---
+
+## 13. コアコンセプト
+
+「壊れたステムを、使える音に。」
