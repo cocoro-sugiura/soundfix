@@ -31,16 +31,16 @@ export default function Home() {
           </button>
         </header>
 
-        <section className="flex flex-1 flex-col items-center justify-center py-12 text-center lg:py-16">
-          <p className="text-sm font-medium uppercase tracking-[0.24em] text-white/40">
+        <section className="flex flex-1 flex-col items-center justify-center py-10 text-center lg:py-14">
+          <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/38">
             AI Audio Restoration
           </p>
 
-          <h1 className="mt-6 max-w-4xl text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[56px]">
             Restore degraded vocals and stems
           </h1>
 
-          <p className="mt-6 max-w-2xl text-base leading-7 text-white/60 sm:text-lg">
+          <p className="mt-5 max-w-xl text-base leading-7 text-white/58 sm:text-[17px]">
             Upload separated audio, hear a restored preview, then unlock the full export.
           </p>
 
@@ -54,19 +54,19 @@ export default function Home() {
 
           <div
             onClick={handleSelectFile}
-            className="mt-12 flex w-full max-w-3xl cursor-pointer flex-col items-center rounded-[32px] border border-dashed border-white/15 bg-white/[0.02] px-6 py-14 transition hover:border-white/30 hover:bg-white/[0.04] sm:px-10 sm:py-16"
+            className="mt-10 flex w-full max-w-[760px] cursor-pointer flex-col items-center rounded-[32px] border border-dashed border-white/15 bg-white/[0.02] px-6 py-12 transition hover:border-white/30 hover:bg-white/[0.04] sm:px-10 sm:py-14"
           >
-            <p className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            <p className="text-[30px] font-semibold tracking-tight text-white sm:text-[34px]">
               {selectedFileName || "Drag and drop audio here"}
             </p>
 
-            <p className="mt-4 max-w-xl text-sm leading-6 text-white/45 sm:text-base">
+            <p className="mt-4 max-w-lg text-sm leading-6 text-white/42 sm:text-[15px]">
               {selectedFileName
                 ? "Your file is loaded and ready for preview."
                 : "Upload a separated vocal or stem to generate a short restored preview."}
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
                 type="button"
                 onClick={(event) => {
@@ -87,7 +87,7 @@ export default function Home() {
               </button>
             </div>
 
-            <p className="mt-6 text-xs text-white/35">WAV, MP3</p>
+            <p className="mt-5 text-xs text-white/32">WAV, MP3</p>
           </div>
         </section>
 
