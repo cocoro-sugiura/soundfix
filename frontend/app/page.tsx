@@ -1,4 +1,44 @@
+"use client";
+
+import { ChangeEvent, useRef, useState } from "react";
+
 export default function Home() {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  const handleSelectFile = () => {
+    inputRef.current?.click();
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      setSelectedFileName("");
+      setIsReady(false);
+      return;
+    }
+
+    setSelectedFileName(file.name);
+    setIsReady(false);
+  };
+
+  const handleFixAudio = async () => {
+    if (!selectedFileName || isProcessing) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setIsReady(false);
+
+    await new Promise((resolve) => setTimeout(resolve, 2200));
+
+    setIsProcessing(false);
+    setIsReady(true);
+  };
+
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-6 sm:px-10 lg:px-12">
@@ -39,17 +79,31 @@ export default function Home() {
                 </span>
               </div>
 
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".wav,.mp3,audio/wav,audio/mpeg"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
               <div className="mt-6 rounded-3xl border border-dashed border-white/15 bg-black/30 px-6 py-14 text-center">
                 <div className="mx-auto max-w-md">
                   <p className="text-base font-medium text-white">
-                    No file selected
+                    {selectedFileName || "No file selected"}
                   </p>
                   <p className="mt-2 text-sm text-white/45">
-                    Upload one separated vocal or stem to begin
+                    {selectedFileName
+                      ? "File loaded and ready for restoration"
+                      : "Upload one separated vocal or stem to begin"}
                   </p>
                   <div className="mt-6">
-                    <button className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90">
-                      Select file
+                    <button
+                      type="button"
+                      onClick={handleSelectFile}
+                      className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90"
+                    >
+                      {selectedFileName ? "Change file" : "Select file"}
                     </button>
                   </div>
                 </div>
@@ -58,14 +112,25 @@ export default function Home() {
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-medium text-white">
-                    Ready to restore
+                    {isProcessing
+                      ? "Restoring your audio"
+                      : isReady
+                        ? "Restoration complete"
+                        : "Ready to restore"}
                   </p>
                   <p className="mt-1 text-sm text-white/45">
-                    AI will restore clarity and reduce artifacts
+                    {isProcessing
+                      ? "Improving clarity, fixing artifacts, rebuilding high-end"
+                      : "AI will restore clarity and reduce artifacts"}
                   </p>
                 </div>
-                <button className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90">
-                  Fix Audio
+                <button
+                  type="button"
+                  onClick={handleFixAudio}
+                  disabled={!selectedFileName || isProcessing}
+                  className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {isProcessing ? "Restoring..." : "Fix Audio"}
                 </button>
               </div>
             </section>
@@ -74,7 +139,9 @@ export default function Home() {
               <div className="border-b border-white/10 pb-4">
                 <h2 className="text-xl font-semibold tracking-tight">Compare</h2>
                 <p className="mt-2 text-sm text-white/55">
-                  Before / After preview will appear here
+                  {isReady
+                    ? "Preview is ready for before and after comparison"
+                    : "Before / After preview will appear here"}
                 </p>
               </div>
 
@@ -89,7 +156,11 @@ export default function Home() {
                   <div className="mt-4 h-12 rounded-xl bg-white/5" />
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+                <div
+                  className={`rounded-2xl border border-white/10 bg-black/30 p-4 transition ${
+                    isReady ? "opacity-100" : "opacity-40"
+                  }`}
+                >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-white">After</span>
                     <span className="text-xs text-white/40">Restored</span>
@@ -98,15 +169,25 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+              <div
+                className={`mt-6 rounded-2xl border border-white/10 bg-black/30 p-4 transition ${
+                  isReady ? "opacity-100" : "opacity-40"
+                }`}
+              >
                 <p className="text-sm font-medium text-white">
-                  Your audio is ready
+                  {isReady ? "Your audio is ready" : "Processed audio will appear here"}
                 </p>
                 <p className="mt-1 text-sm text-white/45">
-                  Sign in to download your restored audio
+                  {isReady
+                    ? "Sign in to download your restored audio"
+                    : "Run restoration to enable download"}
                 </p>
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                  <button className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90">
+                  <button
+                    type="button"
+                    disabled={!isReady}
+                    className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
                     Download
                   </button>
                   <button className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-white transition hover:border-white/30 hover:bg-white/5">
