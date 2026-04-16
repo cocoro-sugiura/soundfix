@@ -26,18 +26,19 @@ export default function ProcessingPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <div className="relative flex h-[220px] w-[220px] items-center justify-center">
-          <div className="absolute h-[220px] w-[220px] rounded-full bg-cyan-400/8 blur-3xl" />
-          <div className="absolute h-[178px] w-[178px] rounded-full border border-white/8 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0.02)_26%,rgba(34,18,84,0.42)_62%,rgba(11,15,40,0.86)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_40px_rgba(38,99,255,0.14)]" />
-          <div className="absolute h-[146px] w-[146px] animate-[spin_8s_linear_infinite] rounded-full">
+        <div className="relative flex h-[240px] w-[240px] items-center justify-center">
+          <div className="absolute h-[240px] w-[240px] rounded-full bg-cyan-400/8 blur-3xl" />
+          <div className="absolute h-[196px] w-[196px] rounded-full bg-[radial-gradient(circle_at_center,rgba(65,95,255,0.12)_0%,rgba(18,24,62,0.34)_46%,rgba(7,10,28,0.94)_100%)] shadow-[0_0_80px_rgba(33,103,255,0.14)]" />
+          <div className="absolute h-[168px] w-[168px] animate-[spin_9s_ease-in-out_infinite] rounded-full border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-20px_30px_rgba(17,24,59,0.22)]">
             <div
-              className="absolute left-[18px] top-[16px] h-[68px] w-[88px] rotate-[-22deg] rounded-[58%_42%_52%_48%/44%_58%_42%_56%] bg-[radial-gradient(circle_at_35%_35%,rgba(255,255,255,0.95)_0%,rgba(255,210,245,0.96)_26%,rgba(255,112,232,0.92)_70%,rgba(168,85,247,0.86)_100%)] blur-[0.5px] shadow-[0_0_24px_rgba(255,86,214,0.45)]"
+              className="absolute left-[20px] top-[18px] h-[78px] w-[108px] rotate-[-26deg] rounded-[58%_42%_68%_32%/42%_54%_46%_58%] bg-[radial-gradient(circle_at_34%_34%,rgba(255,255,255,0.95)_0%,rgba(255,224,248,0.96)_28%,rgba(255,136,238,0.93)_62%,rgba(227,74,255,0.88)_100%)] shadow-[0_0_28px_rgba(255,84,214,0.48)] blur-[0.4px]"
             />
             <div
-              className="absolute bottom-[14px] right-[14px] h-[64px] w-[84px] rotate-[-18deg] rounded-[44%_56%_50%_50%/58%_42%_58%_42%] bg-[radial-gradient(circle_at_65%_35%,rgba(170,255,255,0.95)_0%,rgba(58,244,255,0.92)_36%,rgba(27,188,255,0.9)_72%,rgba(59,130,246,0.82)_100%)] blur-[0.5px] shadow-[0_0_24px_rgba(34,211,238,0.42)]"
+              className="absolute bottom-[20px] right-[18px] h-[74px] w-[104px] rotate-[-24deg] rounded-[38%_62%_46%_54%/58%_36%_64%_42%] bg-[radial-gradient(circle_at_68%_36%,rgba(197,255,255,0.96)_0%,rgba(95,247,255,0.94)_30%,rgba(23,214,255,0.92)_66%,rgba(35,137,255,0.84)_100%)] shadow-[0_0_28px_rgba(34,211,238,0.46)] blur-[0.4px]"
             />
+            <div className="absolute inset-[14px] rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]" />
           </div>
-          <div className="absolute h-[178px] w-[178px] rounded-full border border-fuchsia-300/8" />
+          <div className="absolute h-[196px] w-[196px] rounded-full border border-fuchsia-300/8" />
         </div>
 
         <p className="mt-10 text-xs font-medium uppercase tracking-[0.3em] text-white/40">
@@ -49,7 +50,7 @@ export default function ProcessingPage() {
         </h1>
 
         <p className="mt-4 max-w-md text-sm leading-7 text-white/55 sm:text-base">
-          Preparing your preview with AI enhancement.
+          Preparing your fixed preview.
         </p>
 
         <div className="mt-8 h-[6px] w-full max-w-[240px] overflow-hidden rounded-full bg-white/10">
