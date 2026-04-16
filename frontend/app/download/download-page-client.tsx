@@ -372,7 +372,7 @@ export default function DownloadPageClient({
                 href="/"
                 className="text-sm text-white/45 transition hover:text-white/70"
               >
-                Back to home
+                Fix another file
               </Link>
             </div>
           </div>
