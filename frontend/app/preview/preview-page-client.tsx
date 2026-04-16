@@ -5,14 +5,21 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getPreviewAudioFile } from "../../lib/preview-audio-store";
 
+const BEFORE_WAVEFORM_WIDTH = 960;
+const BEFORE_WAVEFORM_HEIGHT = 96;
+const BEFORE_WAVEFORM_SAMPLE_COUNT = 720;
+
 export default function PreviewPageClient() {
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const beforeWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
   const fileName = previewAudio.fileName || "FILENAME.wav";
   const audioUrl = previewAudio.audioUrl || "";
+  const previewFile = previewAudio.file;
   const isReady = true;
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
+  const [beforeWaveformPoints, setBeforeWaveformPoints] = useState<number[]>([]);
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -37,6 +44,129 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("pause", handlePause);
     };
   }, [audioUrl]);
+
+  useEffect(() => {
+    const buildWaveformPoints = async () => {
+      if (!previewFile) {
+        setBeforeWaveformPoints([]);
+        return;
+      }
+
+      const audioContext = new window.AudioContext();
+
+      try {
+        const arrayBuffer = await previewFile.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        const channelData = audioBuffer.getChannelData(0);
+        const blockSize = Math.max(
+          1,
+          Math.floor(channelData.length / BEFORE_WAVEFORM_SAMPLE_COUNT),
+        );
+
+        const points = Array.from(
+          { length: BEFORE_WAVEFORM_SAMPLE_COUNT },
+          (_, index) => {
+            const start = index * blockSize;
+            const end = Math.min(start + blockSize, channelData.length);
+
+            let peak = 0;
+
+            for (let i = start; i < end; i += 1) {
+              const amplitude = Math.abs(channelData[i]);
+
+              if (amplitude > peak) {
+                peak = amplitude;
+              }
+            }
+
+            return peak;
+          },
+        );
+
+        const normalizedPoints = points.map((point) =>
+          Math.max(0.02, Math.min(1, point)),
+        );
+
+        setBeforeWaveformPoints(normalizedPoints);
+      } catch {
+        setBeforeWaveformPoints([]);
+      } finally {
+        await audioContext.close();
+      }
+    };
+
+    void buildWaveformPoints();
+  }, [previewFile]);
+
+  useEffect(() => {
+    const canvas = beforeWaveformCanvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return;
+    }
+
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const width = BEFORE_WAVEFORM_WIDTH;
+    const height = BEFORE_WAVEFORM_HEIGHT;
+    const midY = height / 2;
+
+    canvas.width = width * devicePixelRatio;
+    canvas.height = height * devicePixelRatio;
+    canvas.style.width = "100%";
+    canvas.style.height = `${height}px`;
+
+    context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    if (!beforeWaveformPoints.length) {
+      context.fillStyle = "rgba(255,255,255,0.08)";
+      context.fillRect(0, midY - 1, width, 2);
+      return;
+    }
+
+    const stepX = width / beforeWaveformPoints.length;
+
+    context.beginPath();
+    context.moveTo(0, midY);
+
+    beforeWaveformPoints.forEach((point, index) => {
+      const x = index * stepX;
+      const amplitude = point * (height * 0.42);
+
+      context.lineTo(x, midY - amplitude);
+    });
+
+    for (let index = beforeWaveformPoints.length - 1; index >= 0; index -= 1) {
+      const x = index * stepX;
+      const amplitude = beforeWaveformPoints[index] * (height * 0.42);
+
+      context.lineTo(x, midY + amplitude);
+    }
+
+    context.closePath();
+    context.fillStyle = "rgba(255,255,255,0.82)";
+    context.fill();
+
+    context.beginPath();
+    context.moveTo(0, midY);
+
+    beforeWaveformPoints.forEach((point, index) => {
+      const x = index * stepX;
+      const amplitude = point * (height * 0.42);
+
+      context.lineTo(x, midY - amplitude);
+    });
+
+    context.strokeStyle = "rgba(255,255,255,0.96)";
+    context.lineWidth = 1;
+    context.stroke();
+  }, [beforeWaveformPoints]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
@@ -123,62 +253,12 @@ export default function PreviewPageClient() {
                       <i className={beforeButtonIconClassName} aria-hidden="true" />
                     </button>
 
-                    <div className="flex flex-1 items-center gap-[5px]">
-                      <div className="h-3 w-1.5 rounded-full bg-white/65" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/90" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/70" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/80" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/65" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/78" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/82" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/72" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/62" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/96" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/84" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/65" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/82" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/94" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/86" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/75" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/64" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/64" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/82" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/94" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/86" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/63" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/60" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/84" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/96" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/88" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/78" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/64" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-3 w-1.5 rounded-full bg-white/54" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/74" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/86" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/80" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/90" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/96" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/84" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/68" />
-                      <div className="h-3 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/72" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/90" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/76" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/66" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
+                    <div className="flex flex-1 items-center">
+                      <canvas
+                        ref={beforeWaveformCanvasRef}
+                        className="block h-24 w-full"
+                        aria-hidden="true"
+                      />
                     </div>
                   </div>
                 </div>
