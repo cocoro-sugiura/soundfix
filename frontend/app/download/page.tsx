@@ -41,9 +41,11 @@ export default async function DownloadPage({
 
           <div className="mt-14 w-full max-w-[760px] rounded-[32px] border border-white/10 bg-white/[0.03] p-8 sm:p-10">
             <div className="flex flex-col items-center text-center">
-              <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/38">
-                Export ready
-              </p>
+            <div className="inline-flex items-center rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1">
+              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-blue-300">
+                Restored audio
+              </span>
+            </div>
 
               <p className="mt-4 break-all text-2xl font-semibold tracking-tight text-white sm:text-[30px]">
                 {fileName}
@@ -55,10 +57,6 @@ export default async function DownloadPage({
                 <i className="fa-solid fa-arrow-down-to-bracket" aria-hidden="true" />
                 <span>Download file</span>
               </button>
-
-              <p className="text-xs text-white/30">
-                Export delivery will be connected next.
-              </p>
 
               <Link
                 href="/"
