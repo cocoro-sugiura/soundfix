@@ -534,12 +534,12 @@ export default function PreviewPageClient() {
                 Preview
               </p>
 
-              <h1 className="mt-4 text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[52px]">
+              <h1 className="mt-4 text-3xl font-semibold leading-[1.06] tracking-tight text-white sm:text-4xl lg:text-[46px]">
                 Your fixed preview is ready
               </h1>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-10">
               <p className="text-[14px] font-medium uppercase tracking-[0.08em] text-white/78">
                 {fileName}
               </p>
@@ -554,7 +554,7 @@ export default function PreviewPageClient() {
 
               <div className="mt-6 space-y-6">
                 <div>
-                  <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
+                  <p className="text-[20px] font-medium tracking-tight text-white sm:text-[24px]">
                     Before
                   </p>
                   <div className="mt-2 flex items-center justify-between gap-4">
@@ -594,7 +594,7 @@ export default function PreviewPageClient() {
                 </div>
 
                 <div>
-                  <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
+                  <p className="text-[20px] font-medium tracking-tight text-white sm:text-[24px]">
                     After
                   </p>
                   <div className="mt-2 flex items-center justify-between gap-4">
@@ -638,7 +638,14 @@ export default function PreviewPageClient() {
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-end">
+              <div className="mt-8 flex items-center justify-between gap-4">
+                <Link
+                  href="/"
+                  className="text-sm text-white/45 transition hover:text-white/70"
+                >
+                  Back
+                </Link>
+
                 <button
                   type="button"
                   onClick={handleContinueToDownload}
@@ -646,15 +653,6 @@ export default function PreviewPageClient() {
                 >
                   Unlock the full fixed export
                 </button>
-              </div>
-
-              <div className="mt-4 flex justify-start">
-                <Link
-                  href="/"
-                  className="text-sm text-white/45 transition hover:text-white/70"
-                >
-                  Back
-                </Link>
               </div>
             </div>
           </div>
