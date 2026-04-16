@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type StoredPreviewFile = {
   fileName: string;
-  audioUrl: string;
+  audioDataUrl: string;
   fileType?: string;
 };
 
@@ -14,7 +14,7 @@ export default function PreviewPageClient() {
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [fileName, setFileName] = useState("FILENAME.wav");
-  const [audioUrl, setAudioUrl] = useState("");
+  const [audioDataUrl, setAudioDataUrl] = useState("");
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
@@ -33,8 +33,8 @@ export default function PreviewPageClient() {
         setFileName(parsedValue.fileName);
       }
 
-      if (parsedValue.audioUrl) {
-        setAudioUrl(parsedValue.audioUrl);
+      if (parsedValue.audioDataUrl) {
+        setAudioDataUrl(parsedValue.audioDataUrl);
       }
     } catch {
       sessionStorage.removeItem("soundfix-preview-file");
@@ -65,7 +65,7 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("ended", handleEnded);
       audioElement.removeEventListener("pause", handlePause);
     };
-  }, [audioUrl]);
+  }, [audioDataUrl]);
 
   const beforeButtonLabel = useMemo(() => {
     return isPlayingBefore ? "❚❚" : "▶";
@@ -74,7 +74,7 @@ export default function PreviewPageClient() {
   const handleToggleBeforePlayback = async () => {
     const audioElement = audioRef.current;
 
-    if (!audioElement || !audioUrl) {
+    if (!audioElement || !audioDataUrl) {
       return;
     }
 
@@ -123,7 +123,7 @@ export default function PreviewPageClient() {
 
               {!isReady ? (
                 <p className="mt-4 text-sm text-white/45">Loading preview...</p>
-              ) : !audioUrl ? (
+              ) : !audioDataUrl ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/58">
                   No preview audio was found. Please go back and select a file again.
                 </div>
@@ -139,12 +139,14 @@ export default function PreviewPageClient() {
                   </p>
 
                   <div className="mt-5 flex items-center gap-6">
-                    <audio ref={audioRef} src={audioUrl} preload="metadata" />
+                    {audioDataUrl ? (
+                      <audio ref={audioRef} src={audioDataUrl} preload="metadata" />
+                    ) : null}
 
                     <button
                       type="button"
                       onClick={handleToggleBeforePlayback}
-                      disabled={!audioUrl}
+                      disabled={!audioDataUrl}
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {beforeButtonLabel}

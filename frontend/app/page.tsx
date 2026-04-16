@@ -1,21 +1,13 @@
 "use client";
 
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
-  const [selectedAudioUrl, setSelectedAudioUrl] = useState("");
-
-  useEffect(() => {
-    return () => {
-      if (selectedAudioUrl) {
-        URL.revokeObjectURL(selectedAudioUrl);
-      }
-    };
-  }, [selectedAudioUrl]);
+  const [selectedAudioDataUrl, setSelectedAudioDataUrl] = useState("");
 
   const handleSelectFile = () => {
     inputRef.current?.click();
@@ -25,37 +17,48 @@ export default function Home() {
     const file = event.target.files?.[0];
 
     if (!file) {
-      if (selectedAudioUrl) {
-        URL.revokeObjectURL(selectedAudioUrl);
-      }
-
       setSelectedFileName("");
-      setSelectedAudioUrl("");
+      setSelectedAudioDataUrl("");
       sessionStorage.removeItem("soundfix-preview-file");
       return;
     }
 
-    if (selectedAudioUrl) {
-      URL.revokeObjectURL(selectedAudioUrl);
-    }
+    const reader = new FileReader();
 
-    const audioUrl = URL.createObjectURL(file);
+    reader.onload = () => {
+      const result = reader.result;
 
-    setSelectedFileName(file.name);
-    setSelectedAudioUrl(audioUrl);
+      if (typeof result !== "string") {
+        setSelectedFileName("");
+        setSelectedAudioDataUrl("");
+        sessionStorage.removeItem("soundfix-preview-file");
+        return;
+      }
 
-    sessionStorage.setItem(
-      "soundfix-preview-file",
-      JSON.stringify({
-        fileName: file.name,
-        audioUrl,
-        fileType: file.type,
-      }),
-    );
+      setSelectedFileName(file.name);
+      setSelectedAudioDataUrl(result);
+
+      sessionStorage.setItem(
+        "soundfix-preview-file",
+        JSON.stringify({
+          fileName: file.name,
+          audioDataUrl: result,
+          fileType: file.type,
+        }),
+      );
+    };
+
+    reader.onerror = () => {
+      setSelectedFileName("");
+      setSelectedAudioDataUrl("");
+      sessionStorage.removeItem("soundfix-preview-file");
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleContinueToPreview = () => {
-    if (!selectedFileName || !selectedAudioUrl) {
+    if (!selectedFileName || !selectedAudioDataUrl) {
       return;
     }
 
