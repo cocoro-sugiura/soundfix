@@ -527,7 +527,7 @@ export default function PreviewPageClient() {
           </button>
         </header>
 
-        <section className="flex flex-1 flex-col items-center py-10 lg:py-14">
+        <section className="flex flex-1 flex-col items-center py-8 lg:py-10">
           <div className="w-full max-w-[980px]">
             <div className="text-center">
               <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/38">
@@ -539,7 +539,7 @@ export default function PreviewPageClient() {
               </h1>
             </div>
 
-            <div className="mt-14">
+            <div className="mt-10">
               <p className="text-[14px] font-medium uppercase tracking-[0.08em] text-white/78">
                 {fileName}
               </p>
@@ -552,7 +552,7 @@ export default function PreviewPageClient() {
                 </div>
               ) : null}
 
-              <div className="mt-10 space-y-10">
+              <div className="mt-8 space-y-8">
                 <div>
                   <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
                     Before
@@ -638,7 +638,7 @@ export default function PreviewPageClient() {
                 </div>
               </div>
 
-              <div className="mt-14 flex justify-end">
+              <div className="mt-10 flex justify-end">
                 <button
                   type="button"
                   onClick={handleContinueToDownload}
@@ -648,7 +648,7 @@ export default function PreviewPageClient() {
                 </button>
               </div>
 
-              <div className="mt-7 flex justify-start">
+              <div className="mt-5 flex justify-start">
                 <Link
                   href="/"
                   className="text-sm text-white/45 transition hover:text-white/70"
