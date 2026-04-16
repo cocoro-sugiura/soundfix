@@ -8,24 +8,11 @@ import { getPreviewAudioFile } from "../../lib/preview-audio-store";
 export default function PreviewPageClient() {
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [fileName, setFileName] = useState("FILENAME.wav");
-  const [audioUrl, setAudioUrl] = useState("");
+  const previewAudio = getPreviewAudioFile();
+  const fileName = previewAudio.fileName || "FILENAME.wav";
+  const audioUrl = previewAudio.audioUrl || "";
+  const isReady = true;
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    const previewAudio = getPreviewAudioFile();
-
-    if (previewAudio.fileName) {
-      setFileName(previewAudio.fileName);
-    }
-
-    if (previewAudio.audioUrl) {
-      setAudioUrl(previewAudio.audioUrl);
-    }
-
-    setIsReady(true);
-  }, []);
 
   useEffect(() => {
     const audioElement = audioRef.current;
