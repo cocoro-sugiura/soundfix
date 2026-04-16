@@ -527,19 +527,19 @@ export default function PreviewPageClient() {
           </button>
         </header>
 
-        <section className="flex flex-1 flex-col items-center py-8 lg:py-10">
+        <section className="flex flex-1 flex-col items-center py-6 lg:py-8">
           <div className="w-full max-w-[980px]">
             <div className="text-center">
               <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/38">
                 Preview
               </p>
 
-              <h1 className="mt-5 text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[56px]">
+              <h1 className="mt-4 text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[52px]">
                 Your fixed preview is ready
               </h1>
             </div>
 
-            <div className="mt-10">
+            <div className="mt-8">
               <p className="text-[14px] font-medium uppercase tracking-[0.08em] text-white/78">
                 {fileName}
               </p>
@@ -552,7 +552,7 @@ export default function PreviewPageClient() {
                 </div>
               ) : null}
 
-              <div className="mt-8 space-y-8">
+              <div className="mt-6 space-y-6">
                 <div>
                   <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
                     Before
@@ -567,7 +567,7 @@ export default function PreviewPageClient() {
                     </p>
                   </div>
 
-                  <div className="mt-5 flex items-center gap-6">
+                  <div className="mt-4 flex items-center gap-4">
                     {audioUrl ? (
                       <audio ref={beforeAudioRef} src={audioUrl} preload="metadata" />
                     ) : null}
@@ -576,7 +576,7 @@ export default function PreviewPageClient() {
                       type="button"
                       onClick={handleToggleBeforePlayback}
                       disabled={!audioUrl}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <i className={beforeButtonIconClassName} aria-hidden="true" />
                     </button>
@@ -585,7 +585,7 @@ export default function PreviewPageClient() {
                       <canvas
                         ref={beforeWaveformCanvasRef}
                         onClick={handleBeforeWaveformSeek}
-                        className="block h-24 w-full cursor-pointer"
+                        className="block h-20 w-full cursor-pointer"
                         aria-label="Seek preview waveform"
                         role="img"
                       />
@@ -607,7 +607,7 @@ export default function PreviewPageClient() {
                     </p>
                   </div>
 
-                  <div className="mt-5 flex items-center gap-6">
+                  <div className="mt-4 flex items-center gap-4">
                     {afterAudioUrl ? (
                       <audio ref={afterAudioRef} src={afterAudioUrl} preload="metadata" />
                     ) : null}
@@ -616,7 +616,7 @@ export default function PreviewPageClient() {
                       type="button"
                       onClick={handleToggleAfterPlayback}
                       disabled={!afterAudioUrl}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <i className={afterButtonIconClassName} aria-hidden="true" />
                     </button>
@@ -625,30 +625,30 @@ export default function PreviewPageClient() {
                       <canvas
                         ref={afterWaveformCanvasRef}
                         onClick={handleAfterWaveformSeek}
-                        className="block h-24 w-full cursor-pointer"
+                        className="block h-20 w-full cursor-pointer"
                         aria-label="Fixed preview waveform"
                         role="img"
                       />
                     </div>
                   </div>
 
-                  <p className="mt-4 text-sm text-white/40">
+                  <p className="mt-3 text-sm text-white/40">
                     1 minute preview
                   </p>
                 </div>
               </div>
 
-              <div className="mt-10 flex justify-end">
+              <div className="mt-8 flex justify-end">
                 <button
                   type="button"
                   onClick={handleContinueToDownload}
-                  className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90"
+                  className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90"
                 >
                   Unlock the full fixed export
                 </button>
               </div>
 
-              <div className="mt-5 flex justify-start">
+              <div className="mt-4 flex justify-start">
                 <Link
                   href="/"
                   className="text-sm text-white/45 transition hover:text-white/70"
