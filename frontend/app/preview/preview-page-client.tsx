@@ -284,7 +284,9 @@ export default function PreviewPageClient() {
   };
 
   const handleContinueToDownload = () => {
-    router.push(`/download?file=${encodeURIComponent(fileName)}`);
+    router.push(
+      `/processing?step=full&file=${encodeURIComponent(fileName)}`,
+    );
   };
 
   return (

@@ -7,6 +7,8 @@ export default function ProcessingPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedFileName = searchParams.get("file") ?? "";
+  const processingStep = searchParams.get("step") ?? "preview";
+  const isFullProcessing = processingStep === "full";
 
   useEffect(() => {
     if (!selectedFileName) {
@@ -15,13 +17,18 @@ export default function ProcessingPageClient() {
     }
 
     const timeoutId = window.setTimeout(() => {
+      if (isFullProcessing) {
+        router.replace(`/download?file=${encodeURIComponent(selectedFileName)}`);
+        return;
+      }
+
       router.replace(`/preview?file=${encodeURIComponent(selectedFileName)}`);
     }, 10000);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [router, selectedFileName]);
+  }, [isFullProcessing, router, selectedFileName]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
@@ -39,11 +46,13 @@ export default function ProcessingPageClient() {
         </p>
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Fixing audio...
+          {isFullProcessing ? "Preparing full export..." : "Fixing audio..."}
         </h1>
 
         <p className="mt-4 max-w-md text-sm leading-7 text-white/55 sm:text-base">
-          Preparing your fixed preview.
+          {isFullProcessing
+            ? "Generating your full fixed file."
+            : "Preparing your fixed preview."}
         </p>
 
         <div className="mt-8 h-[6px] w-full max-w-[240px] overflow-hidden rounded-full bg-white/10">
