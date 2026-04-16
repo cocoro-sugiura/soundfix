@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { getPreviewAudioFile } from "../../lib/preview-audio-store";
 
 const BEFORE_WAVEFORM_WIDTH = 960;
@@ -206,20 +206,6 @@ export default function PreviewPageClient() {
       context.fill();
       context.restore();
     }
-
-    context.beginPath();
-    context.moveTo(0, midY);
-
-    beforeWaveformPoints.forEach((point, index) => {
-      const x = index * stepX;
-      const amplitude = point * (height * 0.42);
-
-      context.lineTo(x, midY - amplitude);
-    });
-
-    context.strokeStyle = "rgba(255,255,255,0.96)";
-    context.lineWidth = 1;
-    context.stroke();
   }, [beforeWaveformPoints, beforePlaybackProgress]);
 
   const beforeButtonIconClassName = useMemo(() => {
@@ -250,6 +236,28 @@ export default function PreviewPageClient() {
 
     audioElement.pause();
     setIsPlayingBefore(false);
+  };
+
+  const handleWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
+    const audioElement = audioRef.current;
+    const canvasElement = beforeWaveformCanvasRef.current;
+
+    if (
+      !audioElement ||
+      !canvasElement ||
+      !audioElement.duration ||
+      Number.isNaN(audioElement.duration)
+    ) {
+      return;
+    }
+
+    const rect = canvasElement.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const nextTime = audioElement.duration * ratio;
+
+    audioElement.currentTime = nextTime;
+    setBeforePlaybackProgress(ratio);
   };
 
   const handleContinueToDownload = () => {
@@ -319,8 +327,10 @@ export default function PreviewPageClient() {
                     <div className="flex flex-1 items-center">
                       <canvas
                         ref={beforeWaveformCanvasRef}
-                        className="block h-24 w-full"
-                        aria-hidden="true"
+                        onClick={handleWaveformSeek}
+                        className="block h-24 w-full cursor-pointer"
+                        aria-label="Seek preview waveform"
+                        role="img"
                       />
                     </div>
                   </div>
