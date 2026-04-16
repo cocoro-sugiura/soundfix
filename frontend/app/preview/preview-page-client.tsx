@@ -11,26 +11,29 @@ const PREVIEW_WAVEFORM_SAMPLE_COUNT = 720;
 
 export default function PreviewPageClient() {
   const router = useRouter();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const beforeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const afterAudioRef = useRef<HTMLAudioElement | null>(null);
   const beforeWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const afterWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
   const fileName = previewAudio.fileName || "FILENAME.wav";
   const audioUrl = previewAudio.audioUrl || "";
+  const afterAudioUrl = audioUrl;
   const previewFile = previewAudio.file;
   const isReady = true;
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
+  const [isPlayingAfter, setIsPlayingAfter] = useState(false);
   const [beforeWaveformPoints, setBeforeWaveformPoints] = useState<number[]>([]);
   const [afterWaveformPoints, setAfterWaveformPoints] = useState<number[]>([]);
   const [beforePlaybackProgress, setBeforePlaybackProgress] = useState(0);
-  const [afterPlaybackProgress] = useState(0);
+  const [afterPlaybackProgress, setAfterPlaybackProgress] = useState(0);
   const [beforeCurrentTime, setBeforeCurrentTime] = useState(0);
-  const [afterCurrentTime] = useState(0);
+  const [afterCurrentTime, setAfterCurrentTime] = useState(0);
   const [beforeDuration, setBeforeDuration] = useState(0);
-  const [afterDuration] = useState(60);
+  const [afterDuration, setAfterDuration] = useState(0);
 
   useEffect(() => {
-    const audioElement = audioRef.current;
+    const audioElement = beforeAudioRef.current;
 
     if (!audioElement) {
       return;
@@ -75,6 +78,53 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, [audioUrl]);
+
+  useEffect(() => {
+    const audioElement = afterAudioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    const handleEnded = () => {
+      setIsPlayingAfter(false);
+      setAfterPlaybackProgress(1);
+      setAfterCurrentTime(audioElement.duration || 0);
+    };
+
+    const handlePause = () => {
+      setIsPlayingAfter(false);
+    };
+
+    const handleTimeUpdate = () => {
+      if (!audioElement.duration || Number.isNaN(audioElement.duration)) {
+        setAfterPlaybackProgress(0);
+        setAfterCurrentTime(0);
+        return;
+      }
+
+      setAfterCurrentTime(audioElement.currentTime);
+      setAfterPlaybackProgress(audioElement.currentTime / audioElement.duration);
+    };
+
+    const handleLoadedMetadata = () => {
+      setAfterCurrentTime(0);
+      setAfterDuration(audioElement.duration || 0);
+      setAfterPlaybackProgress(0);
+    };
+
+    audioElement.addEventListener("ended", handleEnded);
+    audioElement.addEventListener("pause", handlePause);
+    audioElement.addEventListener("timeupdate", handleTimeUpdate);
+    audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+    return () => {
+      audioElement.removeEventListener("ended", handleEnded);
+      audioElement.removeEventListener("pause", handlePause);
+      audioElement.removeEventListener("timeupdate", handleTimeUpdate);
+      audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [afterAudioUrl]);
 
   useEffect(() => {
     const buildWaveformPoints = async () => {
@@ -329,6 +379,10 @@ export default function PreviewPageClient() {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
   }, [isPlayingBefore]);
 
+  const afterButtonIconClassName = useMemo(() => {
+    return isPlayingAfter ? "fa-solid fa-pause" : "fa-solid fa-play";
+  }, [isPlayingAfter]);
+
   const formatPlaybackTime = (timeInSeconds: number) => {
     if (!Number.isFinite(timeInSeconds) || timeInSeconds < 0) {
       return "00:00";
@@ -344,13 +398,19 @@ export default function PreviewPageClient() {
   };
 
   const handleToggleBeforePlayback = async () => {
-    const audioElement = audioRef.current;
+    const audioElement = beforeAudioRef.current;
+    const afterAudioElement = afterAudioRef.current;
 
     if (!audioElement || !audioUrl) {
       return;
     }
 
     if (audioElement.paused) {
+      if (afterAudioElement && !afterAudioElement.paused) {
+        afterAudioElement.pause();
+        setIsPlayingAfter(false);
+      }
+
       if (
         audioElement.duration &&
         !Number.isNaN(audioElement.duration) &&
@@ -370,10 +430,46 @@ export default function PreviewPageClient() {
     setIsPlayingBefore(false);
   };
 
-  const handleWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
-    const audioElement = audioRef.current;
-    const canvasElement = beforeWaveformCanvasRef.current;
+  const handleToggleAfterPlayback = async () => {
+    const audioElement = afterAudioRef.current;
+    const beforeAudioElement = beforeAudioRef.current;
 
+    if (!audioElement || !afterAudioUrl) {
+      return;
+    }
+
+    if (audioElement.paused) {
+      if (beforeAudioElement && !beforeAudioElement.paused) {
+        beforeAudioElement.pause();
+        setIsPlayingBefore(false);
+      }
+
+      if (
+        audioElement.duration &&
+        !Number.isNaN(audioElement.duration) &&
+        audioElement.currentTime >= audioElement.duration
+      ) {
+        audioElement.currentTime = 0;
+        setAfterCurrentTime(0);
+        setAfterPlaybackProgress(0);
+      }
+
+      await audioElement.play();
+      setIsPlayingAfter(true);
+      return;
+    }
+
+    audioElement.pause();
+    setIsPlayingAfter(false);
+  };
+
+  const handleWaveformSeek = (
+    event: MouseEvent<HTMLCanvasElement>,
+    canvasElement: HTMLCanvasElement | null,
+    audioElement: HTMLAudioElement | null,
+    setCurrentTime: (time: number) => void,
+    setPlaybackProgress: (progress: number) => void,
+  ) => {
     if (
       !audioElement ||
       !canvasElement ||
@@ -389,8 +485,28 @@ export default function PreviewPageClient() {
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-    setBeforeCurrentTime(nextTime);
-    setBeforePlaybackProgress(ratio);
+    setCurrentTime(nextTime);
+    setPlaybackProgress(ratio);
+  };
+
+  const handleBeforeWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
+    handleWaveformSeek(
+      event,
+      beforeWaveformCanvasRef.current,
+      beforeAudioRef.current,
+      setBeforeCurrentTime,
+      setBeforePlaybackProgress,
+    );
+  };
+
+  const handleAfterWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
+    handleWaveformSeek(
+      event,
+      afterWaveformCanvasRef.current,
+      afterAudioRef.current,
+      setAfterCurrentTime,
+      setAfterPlaybackProgress,
+    );
   };
 
   const handleContinueToDownload = () => {
@@ -453,7 +569,7 @@ export default function PreviewPageClient() {
 
                   <div className="mt-5 flex items-center gap-6">
                     {audioUrl ? (
-                      <audio ref={audioRef} src={audioUrl} preload="metadata" />
+                      <audio ref={beforeAudioRef} src={audioUrl} preload="metadata" />
                     ) : null}
 
                     <button
@@ -468,7 +584,7 @@ export default function PreviewPageClient() {
                     <div className="flex flex-1 items-center">
                       <canvas
                         ref={beforeWaveformCanvasRef}
-                        onClick={handleWaveformSeek}
+                        onClick={handleBeforeWaveformSeek}
                         className="block h-24 w-full cursor-pointer"
                         aria-label="Seek preview waveform"
                         role="img"
@@ -492,18 +608,24 @@ export default function PreviewPageClient() {
                   </div>
 
                   <div className="mt-5 flex items-center gap-6">
+                    {afterAudioUrl ? (
+                      <audio ref={afterAudioRef} src={afterAudioUrl} preload="metadata" />
+                    ) : null}
+
                     <button
                       type="button"
-                      disabled
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition disabled:cursor-not-allowed disabled:opacity-40"
+                      onClick={handleToggleAfterPlayback}
+                      disabled={!afterAudioUrl}
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      <i className="fa-solid fa-play" aria-hidden="true" />
+                      <i className={afterButtonIconClassName} aria-hidden="true" />
                     </button>
 
                     <div className="flex flex-1 items-center">
                       <canvas
                         ref={afterWaveformCanvasRef}
-                        className="block h-24 w-full"
+                        onClick={handleAfterWaveformSeek}
+                        className="block h-24 w-full cursor-pointer"
                         aria-label="Fixed preview waveform"
                         role="img"
                       />
