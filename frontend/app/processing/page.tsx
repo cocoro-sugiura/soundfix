@@ -26,19 +26,51 @@ export default function ProcessingPage() {
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <div className="relative flex h-[240px] w-[240px] items-center justify-center">
-          <div className="absolute h-[240px] w-[240px] rounded-full bg-cyan-400/8 blur-3xl" />
-          <div className="absolute h-[196px] w-[196px] rounded-full bg-[radial-gradient(circle_at_center,rgba(65,95,255,0.12)_0%,rgba(18,24,62,0.34)_46%,rgba(7,10,28,0.94)_100%)] shadow-[0_0_80px_rgba(33,103,255,0.14)]" />
-          <div className="absolute h-[168px] w-[168px] animate-[spin_9s_ease-in-out_infinite] rounded-full border border-white/6 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.02)_18%,rgba(255,255,255,0)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),inset_0_-20px_30px_rgba(17,24,59,0.22)]">
-            <div
-              className="absolute left-[20px] top-[18px] h-[78px] w-[108px] rotate-[-26deg] rounded-[58%_42%_68%_32%/42%_54%_46%_58%] bg-[radial-gradient(circle_at_34%_34%,rgba(255,255,255,0.95)_0%,rgba(255,224,248,0.96)_28%,rgba(255,136,238,0.93)_62%,rgba(227,74,255,0.88)_100%)] shadow-[0_0_28px_rgba(255,84,214,0.48)] blur-[0.4px]"
-            />
-            <div
-              className="absolute bottom-[20px] right-[18px] h-[74px] w-[104px] rotate-[-24deg] rounded-[38%_62%_46%_54%/58%_36%_64%_42%] bg-[radial-gradient(circle_at_68%_36%,rgba(197,255,255,0.96)_0%,rgba(95,247,255,0.94)_30%,rgba(23,214,255,0.92)_66%,rgba(35,137,255,0.84)_100%)] shadow-[0_0_28px_rgba(34,211,238,0.46)] blur-[0.4px]"
-            />
-            <div className="absolute inset-[14px] rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]" />
+        <div className="relative flex h-[260px] w-[260px] items-center justify-center">
+          <div className="absolute h-[260px] w-[260px] rounded-full bg-cyan-400/8 blur-3xl" />
+          <div className="absolute h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle_at_center,rgba(56,92,255,0.18)_0%,rgba(18,24,62,0.42)_48%,rgba(5,8,22,0.96)_100%)] shadow-[0_0_90px_rgba(33,103,255,0.16)]" />
+          <div className="absolute h-[188px] w-[188px] overflow-hidden rounded-full border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.06)_0%,rgba(255,255,255,0.02)_16%,rgba(255,255,255,0)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.1),inset_0_-30px_40px_rgba(15,23,42,0.28)]">
+            <div className="absolute inset-0 animate-[spin_10s_linear_infinite]">
+              <svg
+                viewBox="0 0 188 188"
+                className="h-full w-full"
+                aria-hidden="true"
+              >
+                <defs>
+                  <filter id="orbBlur">
+                    <feGaussianBlur stdDeviation="2.4" />
+                  </filter>
+
+                  <radialGradient id="pinkBlob" cx="35%" cy="32%" r="75%">
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.98)" />
+                    <stop offset="28%" stopColor="rgba(255,226,247,0.98)" />
+                    <stop offset="62%" stopColor="rgba(255,124,235,0.94)" />
+                    <stop offset="100%" stopColor="rgba(214,70,255,0.88)" />
+                  </radialGradient>
+
+                  <radialGradient id="cyanBlob" cx="68%" cy="34%" r="75%">
+                    <stop offset="0%" stopColor="rgba(214,255,255,0.98)" />
+                    <stop offset="30%" stopColor="rgba(93,247,255,0.95)" />
+                    <stop offset="66%" stopColor="rgba(20,214,255,0.92)" />
+                    <stop offset="100%" stopColor="rgba(31,128,255,0.84)" />
+                  </radialGradient>
+                </defs>
+
+                <g filter="url(#orbBlur)">
+                  <path
+                    d="M46 47C56 28 86 22 103 31C119 39 128 58 122 75C116 91 95 102 75 108C58 113 42 112 36 101C29 89 35 67 46 47Z"
+                    fill="url(#pinkBlob)"
+                  />
+                  <path
+                    d="M82 117C95 101 123 91 143 96C159 100 166 114 162 129C158 145 143 158 124 162C105 166 84 161 76 148C69 138 72 128 82 117Z"
+                    fill="url(#cyanBlob)"
+                  />
+                </g>
+              </svg>
+            </div>
+            <div className="absolute inset-[10px] rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]" />
           </div>
-          <div className="absolute h-[196px] w-[196px] rounded-full border border-fuchsia-300/8" />
+          <div className="absolute h-[220px] w-[220px] rounded-full border border-fuchsia-300/8" />
         </div>
 
         <p className="mt-10 text-xs font-medium uppercase tracking-[0.3em] text-white/40">
