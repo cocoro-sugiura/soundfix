@@ -33,8 +33,8 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#0a0a0d] text-white">
-      <div className="pointer-events-none absolute inset-x-0 top-[-56px] h-[140px] bg-[linear-gradient(180deg,rgba(32,187,255,0.14)_0%,rgba(77,99,255,0.08)_52%,rgba(10,10,13,0)_100%)] blur-3xl" />
-      <div className="pointer-events-none absolute inset-x-0 top-[120px] h-[320px] bg-[linear-gradient(180deg,rgba(33,198,255,0.24)_0%,rgba(71,102,255,0.2)_34%,rgba(116,60,255,0.18)_68%,rgba(10,10,13,0)_100%)] blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-[-56px] h-[140px] bg-[linear-gradient(180deg,rgba(32,187,255,0.18)_0%,rgba(77,99,255,0.11)_52%,rgba(10,10,13,0)_100%)] blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-0 top-[120px] h-[320px] bg-[linear-gradient(180deg,rgba(33,198,255,0.3)_0%,rgba(71,102,255,0.25)_34%,rgba(116,60,255,0.22)_68%,rgba(10,10,13,0)_100%)] blur-3xl" />
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-5 py-5 sm:px-8 lg:px-10">
         <header className="flex items-center justify-between border-b border-white/10 pb-5">
