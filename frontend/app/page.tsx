@@ -1,6 +1,11 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  DragEvent,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   clearPreviewAudioFile,
@@ -12,14 +17,13 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [hasSelectedAudio, setHasSelectedAudio] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const handleSelectFile = () => {
     inputRef.current?.click();
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
+  const applySelectedFile = (file?: File) => {
     if (!file) {
       setSelectedFileName("");
       setHasSelectedAudio(false);
@@ -30,6 +34,40 @@ export default function Home() {
     setPreviewAudioFile(file);
     setSelectedFileName(file.name);
     setHasSelectedAudio(true);
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    applySelectedFile(file);
+  };
+
+  const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(true);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
+
+    const file = event.dataTransfer.files?.[0];
+
+    applySelectedFile(file);
   };
 
   const handleContinueToPreview = () => {
@@ -76,7 +114,15 @@ export default function Home() {
 
           <div
             onClick={handleSelectFile}
-            className="mt-10 flex w-full max-w-[760px] cursor-pointer flex-col items-center rounded-[32px] border border-dashed border-white/15 bg-white/[0.02] px-6 py-12 transition hover:border-white/30 hover:bg-white/[0.04] sm:px-10 sm:py-14"
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`mt-10 flex w-full max-w-[760px] cursor-pointer flex-col items-center rounded-[32px] border border-dashed px-6 py-12 transition sm:px-10 sm:py-14 ${
+              isDragActive
+                ? "border-white/40 bg-white/[0.06]"
+                : "border-white/15 bg-white/[0.02] hover:border-white/30 hover:bg-white/[0.04]"
+            }`}
           >
             <p className="text-[30px] font-semibold tracking-tight text-white sm:text-[34px]">
               {selectedFileName || "Drag and drop audio here"}
@@ -85,7 +131,9 @@ export default function Home() {
             <p className="mt-4 max-w-lg text-sm leading-6 text-white/42 sm:text-[15px]">
               {selectedFileName
                 ? "Your file is loaded and ready for preview."
-                : "Upload a separated vocal or stem to generate a short restored preview."}
+                : isDragActive
+                  ? "Drop your audio file to load it into Soundfix."
+                  : "Upload a separated vocal or stem to generate a short restored preview."}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
