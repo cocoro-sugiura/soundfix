@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
 import { getPreviewAudioFile } from "../../lib/preview-audio-store";
 
-const BEFORE_WAVEFORM_WIDTH = 960;
-const BEFORE_WAVEFORM_HEIGHT = 96;
-const BEFORE_WAVEFORM_SAMPLE_COUNT = 720;
+const PREVIEW_WAVEFORM_WIDTH = 960;
+const PREVIEW_WAVEFORM_HEIGHT = 96;
+const PREVIEW_WAVEFORM_SAMPLE_COUNT = 720;
 
 export default function PreviewPageClient() {
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const beforeWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const afterWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
   const fileName = previewAudio.fileName || "FILENAME.wav";
   const audioUrl = previewAudio.audioUrl || "";
@@ -20,9 +21,13 @@ export default function PreviewPageClient() {
   const isReady = true;
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
   const [beforeWaveformPoints, setBeforeWaveformPoints] = useState<number[]>([]);
+  const [afterWaveformPoints, setAfterWaveformPoints] = useState<number[]>([]);
   const [beforePlaybackProgress, setBeforePlaybackProgress] = useState(0);
+  const [afterPlaybackProgress] = useState(0);
   const [beforeCurrentTime, setBeforeCurrentTime] = useState(0);
+  const [afterCurrentTime] = useState(0);
   const [beforeDuration, setBeforeDuration] = useState(0);
+  const [afterDuration] = useState(60);
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -86,11 +91,11 @@ export default function PreviewPageClient() {
         const channelData = audioBuffer.getChannelData(0);
         const blockSize = Math.max(
           1,
-          Math.floor(channelData.length / BEFORE_WAVEFORM_SAMPLE_COUNT),
+          Math.floor(channelData.length / PREVIEW_WAVEFORM_SAMPLE_COUNT),
         );
 
         const points = Array.from(
-          { length: BEFORE_WAVEFORM_SAMPLE_COUNT },
+          { length: PREVIEW_WAVEFORM_SAMPLE_COUNT },
           (_, index) => {
             const start = index * blockSize;
             const end = Math.min(start + blockSize, channelData.length);
@@ -138,8 +143,8 @@ export default function PreviewPageClient() {
     }
 
     const devicePixelRatio = window.devicePixelRatio || 1;
-    const width = BEFORE_WAVEFORM_WIDTH;
-    const height = BEFORE_WAVEFORM_HEIGHT;
+    const width = PREVIEW_WAVEFORM_WIDTH;
+    const height = PREVIEW_WAVEFORM_HEIGHT;
     const midY = height / 2;
 
     canvas.width = width * devicePixelRatio;
@@ -214,6 +219,111 @@ export default function PreviewPageClient() {
       context.restore();
     }
   }, [beforeWaveformPoints, beforePlaybackProgress]);
+
+  useEffect(() => {
+    const canvas = afterWaveformCanvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return;
+    }
+
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const width = PREVIEW_WAVEFORM_WIDTH;
+    const height = PREVIEW_WAVEFORM_HEIGHT;
+    const midY = height / 2;
+
+    canvas.width = width * devicePixelRatio;
+    canvas.height = height * devicePixelRatio;
+    canvas.style.width = "100%";
+    canvas.style.height = `${height}px`;
+
+    context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    if (!afterWaveformPoints.length) {
+      context.fillStyle = "rgba(255,255,255,0.08)";
+      context.fillRect(0, midY - 1, width, 2);
+      return;
+    }
+
+    const stepX = width / afterWaveformPoints.length;
+    const progressWidth = Math.max(
+      0,
+      Math.min(width, width * afterPlaybackProgress),
+    );
+
+    context.beginPath();
+    context.moveTo(0, midY);
+
+    afterWaveformPoints.forEach((point, index) => {
+      const x = index * stepX;
+      const amplitude = point * (height * 0.42);
+
+      context.lineTo(x, midY - amplitude);
+    });
+
+    for (let index = afterWaveformPoints.length - 1; index >= 0; index -= 1) {
+      const x = index * stepX;
+      const amplitude = afterWaveformPoints[index] * (height * 0.42);
+
+      context.lineTo(x, midY + amplitude);
+    }
+
+    context.closePath();
+    context.save();
+    context.fillStyle = "rgba(255,255,255,0.18)";
+    context.fill();
+    context.restore();
+
+    if (progressWidth > 0) {
+      context.save();
+      context.beginPath();
+      context.rect(0, 0, progressWidth, height);
+      context.clip();
+
+      context.beginPath();
+      context.moveTo(0, midY);
+
+      afterWaveformPoints.forEach((point, index) => {
+        const x = index * stepX;
+        const amplitude = point * (height * 0.42);
+
+        context.lineTo(x, midY - amplitude);
+      });
+
+      for (let index = afterWaveformPoints.length - 1; index >= 0; index -= 1) {
+        const x = index * stepX;
+        const amplitude = afterWaveformPoints[index] * (height * 0.42);
+
+        context.lineTo(x, midY + amplitude);
+      }
+
+      context.closePath();
+      context.fillStyle = "rgba(255,255,255,0.88)";
+      context.fill();
+      context.restore();
+    }
+  }, [afterWaveformPoints, afterPlaybackProgress]);
+
+  useEffect(() => {
+    if (!beforeWaveformPoints.length) {
+      setAfterWaveformPoints([]);
+      return;
+    }
+
+    const derivedAfterPoints = beforeWaveformPoints.map((point, index) => {
+      const modulation = 0.88 + ((index % 9) / 40);
+      return Math.max(0.02, Math.min(1, point * modulation));
+    });
+
+    setAfterWaveformPoints(derivedAfterPoints);
+  }, [beforeWaveformPoints]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
@@ -371,9 +481,15 @@ export default function PreviewPageClient() {
                   <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
                     After
                   </p>
-                  <p className="mt-2 text-base text-white/72">
-                    Soundfix fixed preview
-                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-4">
+                    <p className="text-base text-white/72">
+                      Soundfix fixed preview
+                    </p>
+
+                    <p className="text-sm tabular-nums text-white/48">
+                      {formatPlaybackTime(afterCurrentTime)} / {formatPlaybackTime(afterDuration)}
+                    </p>
+                  </div>
 
                   <div className="mt-5 flex items-center gap-6">
                     <button
@@ -384,64 +500,19 @@ export default function PreviewPageClient() {
                       <i className="fa-solid fa-play" aria-hidden="true" />
                     </button>
 
-                    <div className="flex flex-1 items-center gap-[5px]">
-                      <div className="h-3 w-1.5 rounded-full bg-white/65" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/90" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/70" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/95" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/80" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/65" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/78" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/82" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/72" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/62" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/96" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/84" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/65" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/82" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/94" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/86" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/75" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/64" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/64" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/82" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/94" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/86" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/74" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/63" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/60" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/84" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/96" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/88" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/78" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/64" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-3 w-1.5 rounded-full bg-white/54" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/74" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/92" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/86" />
-                      <div className="h-12 w-1.5 rounded-full bg-white/80" />
-                      <div className="h-11 w-1.5 rounded-full bg-white/90" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/96" />
-                      <div className="h-6 w-1.5 rounded-full bg-white/84" />
-                      <div className="h-4 w-1.5 rounded-full bg-white/68" />
-                      <div className="h-3 w-1.5 rounded-full bg-white/58" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/72" />
-                      <div className="h-8 w-1.5 rounded-full bg-white/90" />
-                      <div className="h-10 w-1.5 rounded-full bg-white/85" />
-                      <div className="h-9 w-1.5 rounded-full bg-white/76" />
-                      <div className="h-7 w-1.5 rounded-full bg-white/66" />
-                      <div className="h-5 w-1.5 rounded-full bg-white/58" />
+                    <div className="flex flex-1 items-center">
+                      <canvas
+                        ref={afterWaveformCanvasRef}
+                        className="block h-24 w-full"
+                        aria-label="Fixed preview waveform"
+                        role="img"
+                      />
                     </div>
                   </div>
+
+                  <p className="mt-4 text-sm text-white/40">
+                    1 minute preview
+                  </p>
                 </div>
               </div>
 
