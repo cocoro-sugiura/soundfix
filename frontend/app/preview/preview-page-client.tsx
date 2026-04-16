@@ -20,6 +20,7 @@ export default function PreviewPageClient() {
   const isReady = true;
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
   const [beforeWaveformPoints, setBeforeWaveformPoints] = useState<number[]>([]);
+  const [beforePlaybackProgress, setBeforePlaybackProgress] = useState(0);
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -30,18 +31,36 @@ export default function PreviewPageClient() {
 
     const handleEnded = () => {
       setIsPlayingBefore(false);
+      setBeforePlaybackProgress(1);
     };
 
     const handlePause = () => {
       setIsPlayingBefore(false);
     };
 
+    const handleTimeUpdate = () => {
+      if (!audioElement.duration || Number.isNaN(audioElement.duration)) {
+        setBeforePlaybackProgress(0);
+        return;
+      }
+
+      setBeforePlaybackProgress(audioElement.currentTime / audioElement.duration);
+    };
+
+    const handleLoadedMetadata = () => {
+      setBeforePlaybackProgress(0);
+    };
+
     audioElement.addEventListener("ended", handleEnded);
     audioElement.addEventListener("pause", handlePause);
+    audioElement.addEventListener("timeupdate", handleTimeUpdate);
+    audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
 
     return () => {
       audioElement.removeEventListener("ended", handleEnded);
       audioElement.removeEventListener("pause", handlePause);
+      audioElement.removeEventListener("timeupdate", handleTimeUpdate);
+      audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, [audioUrl]);
 
@@ -131,6 +150,10 @@ export default function PreviewPageClient() {
     }
 
     const stepX = width / beforeWaveformPoints.length;
+    const progressWidth = Math.max(
+      0,
+      Math.min(width, width * beforePlaybackProgress),
+    );
 
     context.beginPath();
     context.moveTo(0, midY);
@@ -150,8 +173,39 @@ export default function PreviewPageClient() {
     }
 
     context.closePath();
-    context.fillStyle = "rgba(255,255,255,0.82)";
+    context.save();
+    context.fillStyle = "rgba(255,255,255,0.28)";
     context.fill();
+    context.restore();
+
+    if (progressWidth > 0) {
+      context.save();
+      context.beginPath();
+      context.rect(0, 0, progressWidth, height);
+      context.clip();
+
+      context.beginPath();
+      context.moveTo(0, midY);
+
+      beforeWaveformPoints.forEach((point, index) => {
+        const x = index * stepX;
+        const amplitude = point * (height * 0.42);
+
+        context.lineTo(x, midY - amplitude);
+      });
+
+      for (let index = beforeWaveformPoints.length - 1; index >= 0; index -= 1) {
+        const x = index * stepX;
+        const amplitude = beforeWaveformPoints[index] * (height * 0.42);
+
+        context.lineTo(x, midY + amplitude);
+      }
+
+      context.closePath();
+      context.fillStyle = "rgba(255,255,255,0.9)";
+      context.fill();
+      context.restore();
+    }
 
     context.beginPath();
     context.moveTo(0, midY);
@@ -166,7 +220,7 @@ export default function PreviewPageClient() {
     context.strokeStyle = "rgba(255,255,255,0.96)";
     context.lineWidth = 1;
     context.stroke();
-  }, [beforeWaveformPoints]);
+  }, [beforeWaveformPoints, beforePlaybackProgress]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
@@ -180,6 +234,15 @@ export default function PreviewPageClient() {
     }
 
     if (audioElement.paused) {
+      if (
+        audioElement.duration &&
+        !Number.isNaN(audioElement.duration) &&
+        audioElement.currentTime >= audioElement.duration
+      ) {
+        audioElement.currentTime = 0;
+        setBeforePlaybackProgress(0);
+      }
+
       await audioElement.play();
       setIsPlayingBefore(true);
       return;
