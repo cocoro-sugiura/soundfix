@@ -1,0 +1,383 @@
+"use client";
+
+import Link from "next/link";
+import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import { getPreviewAudioFile } from "../../lib/preview-audio-store";
+
+const DOWNLOAD_WAVEFORM_WIDTH = 960;
+const DOWNLOAD_WAVEFORM_HEIGHT = 80;
+const DOWNLOAD_WAVEFORM_SAMPLE_COUNT = 720;
+
+type DownloadPageClientProps = {
+  fileName: string;
+};
+
+export default function DownloadPageClient({
+  fileName,
+}: DownloadPageClientProps) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const waveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const previewAudio = getPreviewAudioFile();
+  const audioUrl = previewAudio.audioUrl || "";
+  const previewFile = previewAudio.file;
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [waveformPoints, setWaveformPoints] = useState<number[]>([]);
+  const [playbackProgress, setPlaybackProgress] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const audioElement = audioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+      setPlaybackProgress(1);
+      setCurrentTime(audioElement.duration || 0);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    const handleTimeUpdate = () => {
+      if (!audioElement.duration || Number.isNaN(audioElement.duration)) {
+        setPlaybackProgress(0);
+        setCurrentTime(0);
+        return;
+      }
+
+      setCurrentTime(audioElement.currentTime);
+      setPlaybackProgress(audioElement.currentTime / audioElement.duration);
+    };
+
+    const handleLoadedMetadata = () => {
+      setCurrentTime(0);
+      setDuration(audioElement.duration || 0);
+      setPlaybackProgress(0);
+    };
+
+    audioElement.addEventListener("ended", handleEnded);
+    audioElement.addEventListener("pause", handlePause);
+    audioElement.addEventListener("timeupdate", handleTimeUpdate);
+    audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+    return () => {
+      audioElement.removeEventListener("ended", handleEnded);
+      audioElement.removeEventListener("pause", handlePause);
+      audioElement.removeEventListener("timeupdate", handleTimeUpdate);
+      audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [audioUrl]);
+
+  useEffect(() => {
+    const buildWaveformPoints = async () => {
+      if (!previewFile) {
+        setWaveformPoints([]);
+        return;
+      }
+
+      const audioContext = new window.AudioContext();
+
+      try {
+        const arrayBuffer = await previewFile.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        const channelData = audioBuffer.getChannelData(0);
+        const blockSize = Math.max(
+          1,
+          Math.floor(channelData.length / DOWNLOAD_WAVEFORM_SAMPLE_COUNT),
+        );
+
+        const points = Array.from(
+          { length: DOWNLOAD_WAVEFORM_SAMPLE_COUNT },
+          (_, index) => {
+            const start = index * blockSize;
+            const end = Math.min(start + blockSize, channelData.length);
+
+            let peak = 0;
+
+            for (let i = start; i < end; i += 1) {
+              const amplitude = Math.abs(channelData[i]);
+
+              if (amplitude > peak) {
+                peak = amplitude;
+              }
+            }
+
+            return peak;
+          },
+        );
+
+        const normalizedPoints = points.map((point) =>
+          Math.max(0.02, Math.min(1, point)),
+        );
+
+        setWaveformPoints(normalizedPoints);
+      } catch {
+        setWaveformPoints([]);
+      } finally {
+        await audioContext.close();
+      }
+    };
+
+    void buildWaveformPoints();
+  }, [previewFile]);
+
+  useEffect(() => {
+    const canvas = waveformCanvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return;
+    }
+
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const width = DOWNLOAD_WAVEFORM_WIDTH;
+    const height = DOWNLOAD_WAVEFORM_HEIGHT;
+    const midY = height / 2;
+
+    canvas.width = width * devicePixelRatio;
+    canvas.height = height * devicePixelRatio;
+    canvas.style.width = "100%";
+    canvas.style.height = `${height}px`;
+
+    context.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    if (!waveformPoints.length) {
+      context.fillStyle = "rgba(255,255,255,0.08)";
+      context.fillRect(0, midY - 1, width, 2);
+      return;
+    }
+
+    const stepX = width / waveformPoints.length;
+    const progressWidth = Math.max(
+      0,
+      Math.min(width, width * playbackProgress),
+    );
+
+    context.beginPath();
+    context.moveTo(0, midY);
+
+    waveformPoints.forEach((point, index) => {
+      const x = index * stepX;
+      const amplitude = point * (height * 0.42);
+
+      context.lineTo(x, midY - amplitude);
+    });
+
+    for (let index = waveformPoints.length - 1; index >= 0; index -= 1) {
+      const x = index * stepX;
+      const amplitude = waveformPoints[index] * (height * 0.42);
+
+      context.lineTo(x, midY + amplitude);
+    }
+
+    context.closePath();
+    context.save();
+    context.fillStyle = "rgba(255,255,255,0.2)";
+    context.fill();
+    context.restore();
+
+    if (progressWidth > 0) {
+      context.save();
+      context.beginPath();
+      context.rect(0, 0, progressWidth, height);
+      context.clip();
+
+      context.beginPath();
+      context.moveTo(0, midY);
+
+      waveformPoints.forEach((point, index) => {
+        const x = index * stepX;
+        const amplitude = point * (height * 0.42);
+
+        context.lineTo(x, midY - amplitude);
+      });
+
+      for (let index = waveformPoints.length - 1; index >= 0; index -= 1) {
+        const x = index * stepX;
+        const amplitude = waveformPoints[index] * (height * 0.42);
+
+        context.lineTo(x, midY + amplitude);
+      }
+
+      context.closePath();
+      context.fillStyle = "rgba(255,255,255,0.9)";
+      context.fill();
+      context.restore();
+    }
+  }, [waveformPoints, playbackProgress]);
+
+  const buttonIconClassName = useMemo(() => {
+    return isPlaying ? "fa-solid fa-pause" : "fa-solid fa-play";
+  }, [isPlaying]);
+
+  const formatPlaybackTime = (timeInSeconds: number) => {
+    if (!Number.isFinite(timeInSeconds) || timeInSeconds < 0) {
+      return "00:00";
+    }
+
+    const totalSeconds = Math.floor(timeInSeconds);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const handleTogglePlayback = async () => {
+    const audioElement = audioRef.current;
+
+    if (!audioElement || !audioUrl) {
+      return;
+    }
+
+    if (audioElement.paused) {
+      if (
+        audioElement.duration &&
+        !Number.isNaN(audioElement.duration) &&
+        audioElement.currentTime >= audioElement.duration
+      ) {
+        audioElement.currentTime = 0;
+        setCurrentTime(0);
+        setPlaybackProgress(0);
+      }
+
+      await audioElement.play();
+      setIsPlaying(true);
+      return;
+    }
+
+    audioElement.pause();
+    setIsPlaying(false);
+  };
+
+  const handleWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
+    const audioElement = audioRef.current;
+    const canvasElement = waveformCanvasRef.current;
+
+    if (
+      !audioElement ||
+      !canvasElement ||
+      !audioElement.duration ||
+      Number.isNaN(audioElement.duration)
+    ) {
+      return;
+    }
+
+    const rect = canvasElement.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const nextTime = audioElement.duration * ratio;
+
+    audioElement.currentTime = nextTime;
+    setCurrentTime(nextTime);
+    setPlaybackProgress(ratio);
+  };
+
+  return (
+    <main className="min-h-screen bg-[#0a0a0d] text-white">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1440px] flex-col px-5 py-5 sm:px-8 lg:px-10">
+        <header className="flex items-center justify-between border-b border-white/10 pb-5">
+          <Link href="/" className="text-xl font-semibold tracking-tight">
+            Soundfix
+          </Link>
+          <button className="rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white transition hover:border-white/30 hover:bg-white/5">
+            Sign in
+          </button>
+        </header>
+
+        <section className="flex flex-1 flex-col items-center py-6 lg:py-8">
+          <div className="w-full max-w-[980px] text-center">
+            <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/38">
+              Download
+            </p>
+
+            <h1 className="mt-4 text-3xl font-semibold leading-[1.06] tracking-tight text-white sm:text-4xl lg:text-[46px]">
+              Your full fixed file is ready
+            </h1>
+
+            <p className="mt-4 mx-auto max-w-xl text-base leading-7 text-white/58 sm:text-[17px]">
+              Credits have been used for this export. You can now download the full fixed version.
+            </p>
+          </div>
+
+          <div className="mt-8 w-full max-w-[760px] rounded-[32px] border border-white/10 bg-white/[0.03] p-8 sm:p-10">
+            <div className="flex flex-col items-center text-center">
+              <div className="inline-flex items-center rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1">
+                <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-blue-300">
+                  Fixed audio
+                </span>
+              </div>
+
+              <p className="mt-4 break-all text-xl font-semibold tracking-tight text-white sm:text-[26px]">
+                {fileName}
+              </p>
+            </div>
+
+            <div className="mt-8">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-base text-white/72">
+                  Soundfix fixed file
+                </p>
+
+                <p className="text-sm tabular-nums text-white/48">
+                  {formatPlaybackTime(currentTime)} / {formatPlaybackTime(duration)}
+                </p>
+              </div>
+
+              <div className="mt-4 flex items-center gap-4">
+                {audioUrl ? (
+                  <audio ref={audioRef} src={audioUrl} preload="metadata" />
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={handleTogglePlayback}
+                  disabled={!audioUrl}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <i className={buttonIconClassName} aria-hidden="true" />
+                </button>
+
+                <div className="flex flex-1 items-center">
+                  <canvas
+                    ref={waveformCanvasRef}
+                    onClick={handleWaveformSeek}
+                    className="block h-20 w-full cursor-pointer"
+                    aria-label="Fixed full waveform"
+                    role="img"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-col items-center gap-4">
+              <button className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90">
+                <i className="fa-solid fa-arrow-down-to-bracket" aria-hidden="true" />
+                <span>Download file</span>
+              </button>
+
+              <Link
+                href="/"
+                className="text-sm text-white/45 transition hover:text-white/70"
+              >
+                Back to home
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
