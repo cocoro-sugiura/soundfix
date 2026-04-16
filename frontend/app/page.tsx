@@ -119,15 +119,15 @@ export default function Home() {
 
         <section className="flex flex-1 flex-col items-center justify-center py-10 text-center lg:py-14">
           <p className="text-sm font-medium uppercase tracking-[0.22em] text-white/38">
-            AI Audio Restoration
+            AI Audio Fix
           </p>
 
           <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[56px]">
-            Restore degraded vocals and stems
+            Fix degraded vocals and stems
           </h1>
 
           <p className="mt-5 max-w-xl text-base leading-7 text-white/58 sm:text-[17px]">
-            Upload separated audio, hear a restored preview, then unlock the full export.
+            Upload separated audio, hear a fixed preview, then unlock the full export.
           </p>
 
           <input
@@ -244,7 +244,7 @@ export default function Home() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-white">After</p>
-                    <p className="mt-1 text-xs text-white/35">Soundfix restored</p>
+                    <p className="mt-1 text-xs text-white/35">Soundfix fixed</p>
                   </div>
                   <span className="text-xs text-white/30">00:59</span>
                 </div>
@@ -278,7 +278,7 @@ export default function Home() {
                 What it does
               </p>
               <p className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Restore clarity lost during separation
+                Fix clarity loss from separation
               </p>
               <p className="mt-4 max-w-xl text-sm leading-7 text-white/50 sm:text-base">
                 Soundfix is built to improve degraded extracted audio and make it more usable for production.

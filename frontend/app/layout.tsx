@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Soundfix",
-  description: "AI audio restoration for degraded vocals and stems",
+  description: "AI audio fixing for degraded vocals and stems",
 };
 
 export default function RootLayout({

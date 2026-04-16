@@ -31,11 +31,11 @@ export default async function DownloadPage({
             </p>
 
             <h1 className="mt-5 text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[56px]">
-              Your full restored file is ready
+              Your full fixed file is ready
             </h1>
 
             <p className="mt-5 max-w-xl mx-auto text-base leading-7 text-white/58 sm:text-[17px]">
-              Credits have been used for this export. You can now download the full restored version.
+              Credits have been used for this export. You can now download the full fixed version.
             </p>
           </div>
 

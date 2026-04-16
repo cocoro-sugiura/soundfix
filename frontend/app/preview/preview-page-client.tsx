@@ -307,7 +307,7 @@ export default function PreviewPageClient() {
               </p>
 
               <h1 className="mt-5 text-4xl font-semibold leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[56px]">
-                Your restored preview is ready
+                Your fixed preview is ready
               </h1>
             </div>
 
@@ -370,7 +370,7 @@ export default function PreviewPageClient() {
                     After
                   </p>
                   <p className="mt-2 text-base text-white/72">
-                    Soundfix restored preview
+                    Soundfix fixed preview
                   </p>
 
                   <div className="mt-5 flex items-center gap-6">
@@ -449,7 +449,7 @@ export default function PreviewPageClient() {
                   onClick={handleContinueToDownload}
                   className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90"
                 >
-                  Unlock the full restored export
+                  Unlock the full fixed export
                 </button>
               </div>
 
