@@ -41,11 +41,7 @@ export default async function DownloadPage({
 
           <div className="mt-14 w-full max-w-[760px] rounded-[32px] border border-white/10 bg-white/[0.03] p-8 sm:p-10">
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-white">
-                <i className="fa-solid fa-download" aria-hidden="true" />
-              </div>
-
-              <p className="mt-6 text-xs font-medium uppercase tracking-[0.24em] text-white/38">
+              <p className="text-xs font-medium uppercase tracking-[0.24em] text-white/38">
                 Export ready
               </p>
 
@@ -56,7 +52,7 @@ export default async function DownloadPage({
 
             <div className="mt-10 flex flex-col items-center gap-4">
               <button className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90">
-                <i className="fa-solid fa-arrow-down" aria-hidden="true" />
+                <i className="fa-solid fa-arrow-down-to-bracket" aria-hidden="true" />
                 <span>Download file</span>
               </button>
 
