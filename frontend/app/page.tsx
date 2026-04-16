@@ -1,12 +1,21 @@
 "use client";
 
-import { ChangeEvent, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
+  const [selectedAudioUrl, setSelectedAudioUrl] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (selectedAudioUrl) {
+        URL.revokeObjectURL(selectedAudioUrl);
+      }
+    };
+  }, [selectedAudioUrl]);
 
   const handleSelectFile = () => {
     inputRef.current?.click();
@@ -16,15 +25,37 @@ export default function Home() {
     const file = event.target.files?.[0];
 
     if (!file) {
+      if (selectedAudioUrl) {
+        URL.revokeObjectURL(selectedAudioUrl);
+      }
+
       setSelectedFileName("");
+      setSelectedAudioUrl("");
+      sessionStorage.removeItem("soundfix-preview-file");
       return;
     }
 
+    if (selectedAudioUrl) {
+      URL.revokeObjectURL(selectedAudioUrl);
+    }
+
+    const audioUrl = URL.createObjectURL(file);
+
     setSelectedFileName(file.name);
+    setSelectedAudioUrl(audioUrl);
+
+    sessionStorage.setItem(
+      "soundfix-preview-file",
+      JSON.stringify({
+        fileName: file.name,
+        audioUrl,
+        fileType: file.type,
+      }),
+    );
   };
 
   const handleContinueToPreview = () => {
-    if (!selectedFileName) {
+    if (!selectedFileName || !selectedAudioUrl) {
       return;
     }
 

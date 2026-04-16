@@ -2,15 +2,91 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-type PreviewPageClientProps = {
+type StoredPreviewFile = {
   fileName: string;
+  audioUrl: string;
+  fileType?: string;
 };
 
-export default function PreviewPageClient({
-  fileName,
-}: PreviewPageClientProps) {
+export default function PreviewPageClient() {
   const router = useRouter();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [fileName, setFileName] = useState("FILENAME.wav");
+  const [audioUrl, setAudioUrl] = useState("");
+  const [isPlayingBefore, setIsPlayingBefore] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const storedValue = sessionStorage.getItem("soundfix-preview-file");
+
+    if (!storedValue) {
+      setIsReady(true);
+      return;
+    }
+
+    try {
+      const parsedValue = JSON.parse(storedValue) as StoredPreviewFile;
+
+      if (parsedValue.fileName) {
+        setFileName(parsedValue.fileName);
+      }
+
+      if (parsedValue.audioUrl) {
+        setAudioUrl(parsedValue.audioUrl);
+      }
+    } catch {
+      sessionStorage.removeItem("soundfix-preview-file");
+    } finally {
+      setIsReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    const audioElement = audioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    const handleEnded = () => {
+      setIsPlayingBefore(false);
+    };
+
+    const handlePause = () => {
+      setIsPlayingBefore(false);
+    };
+
+    audioElement.addEventListener("ended", handleEnded);
+    audioElement.addEventListener("pause", handlePause);
+
+    return () => {
+      audioElement.removeEventListener("ended", handleEnded);
+      audioElement.removeEventListener("pause", handlePause);
+    };
+  }, [audioUrl]);
+
+  const beforeButtonLabel = useMemo(() => {
+    return isPlayingBefore ? "❚❚" : "▶";
+  }, [isPlayingBefore]);
+
+  const handleToggleBeforePlayback = async () => {
+    const audioElement = audioRef.current;
+
+    if (!audioElement || !audioUrl) {
+      return;
+    }
+
+    if (audioElement.paused) {
+      await audioElement.play();
+      setIsPlayingBefore(true);
+      return;
+    }
+
+    audioElement.pause();
+    setIsPlayingBefore(false);
+  };
 
   const handleContinueToDownload = () => {
     router.push(`/download?file=${encodeURIComponent(fileName)}`);
@@ -45,6 +121,14 @@ export default function PreviewPageClient({
                 {fileName}
               </p>
 
+              {!isReady ? (
+                <p className="mt-4 text-sm text-white/45">Loading preview...</p>
+              ) : !audioUrl ? (
+                <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/58">
+                  No preview audio was found. Please go back and select a file again.
+                </div>
+              ) : null}
+
               <div className="mt-10 space-y-10">
                 <div>
                   <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
@@ -55,8 +139,15 @@ export default function PreviewPageClient({
                   </p>
 
                   <div className="mt-5 flex items-center gap-6">
-                    <button className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90">
-                      ▶
+                    <audio ref={audioRef} src={audioUrl} preload="metadata" />
+
+                    <button
+                      type="button"
+                      onClick={handleToggleBeforePlayback}
+                      disabled={!audioUrl}
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {beforeButtonLabel}
                     </button>
 
                     <div className="flex flex-1 items-center gap-[5px]">
@@ -128,7 +219,11 @@ export default function PreviewPageClient({
                   </p>
 
                   <div className="mt-5 flex items-center gap-6">
-                    <button className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90">
+                    <button
+                      type="button"
+                      disabled
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
                       ▶
                     </button>
 
