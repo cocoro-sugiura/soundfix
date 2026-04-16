@@ -3,44 +3,28 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-
-type StoredPreviewFile = {
-  fileName: string;
-  audioDataUrl: string;
-  fileType?: string;
-};
+import { getPreviewAudioFile } from "../../lib/preview-audio-store";
 
 export default function PreviewPageClient() {
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [fileName, setFileName] = useState("FILENAME.wav");
-  const [audioDataUrl, setAudioDataUrl] = useState("");
+  const [audioUrl, setAudioUrl] = useState("");
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const storedValue = sessionStorage.getItem("soundfix-preview-file");
+    const previewAudio = getPreviewAudioFile();
 
-    if (!storedValue) {
-      setIsReady(true);
-      return;
+    if (previewAudio.fileName) {
+      setFileName(previewAudio.fileName);
     }
 
-    try {
-      const parsedValue = JSON.parse(storedValue) as StoredPreviewFile;
-
-      if (parsedValue.fileName) {
-        setFileName(parsedValue.fileName);
-      }
-
-      if (parsedValue.audioDataUrl) {
-        setAudioDataUrl(parsedValue.audioDataUrl);
-      }
-    } catch {
-      sessionStorage.removeItem("soundfix-preview-file");
-    } finally {
-      setIsReady(true);
+    if (previewAudio.audioUrl) {
+      setAudioUrl(previewAudio.audioUrl);
     }
+
+    setIsReady(true);
   }, []);
 
   useEffect(() => {
@@ -65,7 +49,7 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("ended", handleEnded);
       audioElement.removeEventListener("pause", handlePause);
     };
-  }, [audioDataUrl]);
+  }, [audioUrl]);
 
   const beforeButtonLabel = useMemo(() => {
     return isPlayingBefore ? "❚❚" : "▶";
@@ -74,7 +58,7 @@ export default function PreviewPageClient() {
   const handleToggleBeforePlayback = async () => {
     const audioElement = audioRef.current;
 
-    if (!audioElement || !audioDataUrl) {
+    if (!audioElement || !audioUrl) {
       return;
     }
 
@@ -123,7 +107,7 @@ export default function PreviewPageClient() {
 
               {!isReady ? (
                 <p className="mt-4 text-sm text-white/45">Loading preview...</p>
-              ) : !audioDataUrl ? (
+              ) : !audioUrl ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/58">
                   No preview audio was found. Please go back and select a file again.
                 </div>
@@ -139,14 +123,14 @@ export default function PreviewPageClient() {
                   </p>
 
                   <div className="mt-5 flex items-center gap-6">
-                    {audioDataUrl ? (
-                      <audio ref={audioRef} src={audioDataUrl} preload="metadata" />
+                    {audioUrl ? (
+                      <audio ref={audioRef} src={audioUrl} preload="metadata" />
                     ) : null}
 
                     <button
                       type="button"
                       onClick={handleToggleBeforePlayback}
-                      disabled={!audioDataUrl}
+                      disabled={!audioUrl}
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {beforeButtonLabel}

@@ -2,12 +2,16 @@
 
 import { ChangeEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  clearPreviewAudioFile,
+  setPreviewAudioFile,
+} from "../lib/preview-audio-store";
 
 export default function Home() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
-  const [selectedAudioDataUrl, setSelectedAudioDataUrl] = useState("");
+  const [hasSelectedAudio, setHasSelectedAudio] = useState(false);
 
   const handleSelectFile = () => {
     inputRef.current?.click();
@@ -18,47 +22,18 @@ export default function Home() {
 
     if (!file) {
       setSelectedFileName("");
-      setSelectedAudioDataUrl("");
-      sessionStorage.removeItem("soundfix-preview-file");
+      setHasSelectedAudio(false);
+      clearPreviewAudioFile();
       return;
     }
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const result = reader.result;
-
-      if (typeof result !== "string") {
-        setSelectedFileName("");
-        setSelectedAudioDataUrl("");
-        sessionStorage.removeItem("soundfix-preview-file");
-        return;
-      }
-
-      setSelectedFileName(file.name);
-      setSelectedAudioDataUrl(result);
-
-      sessionStorage.setItem(
-        "soundfix-preview-file",
-        JSON.stringify({
-          fileName: file.name,
-          audioDataUrl: result,
-          fileType: file.type,
-        }),
-      );
-    };
-
-    reader.onerror = () => {
-      setSelectedFileName("");
-      setSelectedAudioDataUrl("");
-      sessionStorage.removeItem("soundfix-preview-file");
-    };
-
-    reader.readAsDataURL(file);
+    setPreviewAudioFile(file);
+    setSelectedFileName(file.name);
+    setHasSelectedAudio(true);
   };
 
   const handleContinueToPreview = () => {
-    if (!selectedFileName || !selectedAudioDataUrl) {
+    if (!selectedFileName || !hasSelectedAudio) {
       return;
     }
 
@@ -131,7 +106,7 @@ export default function Home() {
                   event.stopPropagation();
                   handleContinueToPreview();
                 }}
-                disabled={!selectedFileName}
+                disabled={!selectedFileName || !hasSelectedAudio}
                 className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Continue to preview
