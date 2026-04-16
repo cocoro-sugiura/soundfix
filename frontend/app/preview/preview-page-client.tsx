@@ -21,6 +21,8 @@ export default function PreviewPageClient() {
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
   const [beforeWaveformPoints, setBeforeWaveformPoints] = useState<number[]>([]);
   const [beforePlaybackProgress, setBeforePlaybackProgress] = useState(0);
+  const [beforeCurrentTime, setBeforeCurrentTime] = useState(0);
+  const [beforeDuration, setBeforeDuration] = useState(0);
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -32,6 +34,7 @@ export default function PreviewPageClient() {
     const handleEnded = () => {
       setIsPlayingBefore(false);
       setBeforePlaybackProgress(1);
+      setBeforeCurrentTime(audioElement.duration || 0);
     };
 
     const handlePause = () => {
@@ -41,13 +44,17 @@ export default function PreviewPageClient() {
     const handleTimeUpdate = () => {
       if (!audioElement.duration || Number.isNaN(audioElement.duration)) {
         setBeforePlaybackProgress(0);
+        setBeforeCurrentTime(0);
         return;
       }
 
+      setBeforeCurrentTime(audioElement.currentTime);
       setBeforePlaybackProgress(audioElement.currentTime / audioElement.duration);
     };
 
     const handleLoadedMetadata = () => {
+      setBeforeCurrentTime(0);
+      setBeforeDuration(audioElement.duration || 0);
       setBeforePlaybackProgress(0);
     };
 
@@ -212,6 +219,20 @@ export default function PreviewPageClient() {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
   }, [isPlayingBefore]);
 
+  const formatPlaybackTime = (timeInSeconds: number) => {
+    if (!Number.isFinite(timeInSeconds) || timeInSeconds < 0) {
+      return "00:00";
+    }
+
+    const totalSeconds = Math.floor(timeInSeconds);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   const handleToggleBeforePlayback = async () => {
     const audioElement = audioRef.current;
 
@@ -226,6 +247,7 @@ export default function PreviewPageClient() {
         audioElement.currentTime >= audioElement.duration
       ) {
         audioElement.currentTime = 0;
+        setBeforeCurrentTime(0);
         setBeforePlaybackProgress(0);
       }
 
@@ -257,6 +279,7 @@ export default function PreviewPageClient() {
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
+    setBeforeCurrentTime(nextTime);
     setBeforePlaybackProgress(ratio);
   };
 
@@ -306,9 +329,15 @@ export default function PreviewPageClient() {
                   <p className="text-[22px] font-medium tracking-tight text-white sm:text-[28px]">
                     Before
                   </p>
-                  <p className="mt-2 text-base text-white/72">
-                    Original separated audio
-                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-4">
+                    <p className="text-base text-white/72">
+                      Original separated audio
+                    </p>
+
+                    <p className="text-sm tabular-nums text-white/48">
+                      {formatPlaybackTime(beforeCurrentTime)} / {formatPlaybackTime(beforeDuration)}
+                    </p>
+                  </div>
 
                   <div className="mt-5 flex items-center gap-6">
                     {audioUrl ? (
