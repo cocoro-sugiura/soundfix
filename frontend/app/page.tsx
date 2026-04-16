@@ -12,25 +12,49 @@ import {
   setPreviewAudioFile,
 } from "../lib/preview-audio-store";
 
+const SUPPORTED_AUDIO_TYPES = [
+  "audio/wav",
+  "audio/x-wav",
+  "audio/mpeg",
+  "audio/mp3",
+];
+
+const SUPPORTED_AUDIO_EXTENSIONS = [".wav", ".mp3"];
+
 export default function Home() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFileName, setSelectedFileName] = useState("");
   const [hasSelectedAudio, setHasSelectedAudio] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [uploadErrorMessage, setUploadErrorMessage] = useState("");
 
   const handleSelectFile = () => {
     inputRef.current?.click();
   };
 
+  const isSupportedAudioFile = (file: File) => {
+    const normalizedFileName = file.name.toLowerCase();
+
+    return (
+      SUPPORTED_AUDIO_TYPES.includes(file.type.toLowerCase()) ||
+      SUPPORTED_AUDIO_EXTENSIONS.some((extension) =>
+        normalizedFileName.endsWith(extension),
+      )
+    );
+  };
+
   const applySelectedFile = (file?: File) => {
     if (!file) {
-      setSelectedFileName("");
-      setHasSelectedAudio(false);
-      clearPreviewAudioFile();
       return;
     }
 
+    if (!isSupportedAudioFile(file)) {
+      setUploadErrorMessage("Only WAV and MP3 files are supported right now.");
+      return;
+    }
+
+    setUploadErrorMessage("");
     setPreviewAudioFile(file);
     setSelectedFileName(file.name);
     setHasSelectedAudio(true);
@@ -40,6 +64,8 @@ export default function Home() {
     const file = event.target.files?.[0];
 
     applySelectedFile(file);
+
+    event.target.value = "";
   };
 
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
@@ -136,6 +162,12 @@ export default function Home() {
                   : "Upload a separated vocal or stem to generate a short restored preview."}
             </p>
 
+            {uploadErrorMessage ? (
+              <div className="mt-4 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {uploadErrorMessage}
+              </div>
+            ) : null}
+
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
                 type="button"
@@ -161,7 +193,7 @@ export default function Home() {
               </button>
             </div>
 
-            <p className="mt-5 text-xs text-white/32">WAV, MP3</p>
+            <p className="mt-5 text-xs text-white/32">WAV, MP3 only</p>
           </div>
         </section>
 
