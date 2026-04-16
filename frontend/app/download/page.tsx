@@ -43,7 +43,7 @@ export default async function DownloadPage({
             <div className="flex flex-col items-center text-center">
             <div className="inline-flex items-center rounded-full border border-blue-400/30 bg-blue-500/10 px-3 py-1">
               <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-blue-300">
-                Restored audio
+                Fixed audio
               </span>
             </div>
 
