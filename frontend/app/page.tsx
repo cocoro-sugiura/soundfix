@@ -101,7 +101,7 @@ export default function Home() {
       return;
     }
 
-    router.push(`/preview?file=${encodeURIComponent(selectedFileName)}`);
+    router.push(`/processing?file=${encodeURIComponent(selectedFileName)}`);
   };
 
   return (
