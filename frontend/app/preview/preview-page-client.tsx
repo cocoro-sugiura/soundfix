@@ -38,8 +38,8 @@ export default function PreviewPageClient() {
     };
   }, [audioUrl]);
 
-  const beforeButtonLabel = useMemo(() => {
-    return isPlayingBefore ? "❚❚" : "▶";
+  const beforeButtonIconClassName = useMemo(() => {
+    return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
   }, [isPlayingBefore]);
 
   const handleToggleBeforePlayback = async () => {
@@ -120,7 +120,7 @@ export default function PreviewPageClient() {
                       disabled={!audioUrl}
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {beforeButtonLabel}
+                      <i className={beforeButtonIconClassName} aria-hidden="true" />
                     </button>
 
                     <div className="flex flex-1 items-center gap-[5px]">
@@ -197,7 +197,7 @@ export default function PreviewPageClient() {
                       disabled
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-base text-black transition disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      ▶
+                      <i className="fa-solid fa-play" aria-hidden="true" />
                     </button>
 
                     <div className="flex flex-1 items-center gap-[5px]">
