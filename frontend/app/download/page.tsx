@@ -52,39 +52,6 @@ export default async function DownloadPage({
               <p className="mt-4 break-all text-2xl font-semibold tracking-tight text-white sm:text-[30px]">
                 {fileName}
               </p>
-
-              <p className="mt-4 max-w-xl text-sm leading-7 text-white/52 sm:text-base">
-                Your full restored export is ready to download. Save the file and continue refining your workflow in Soundfix.
-              </p>
-            </div>
-
-            <div className="mt-8 grid gap-3 rounded-[24px] border border-white/10 bg-black/20 p-4 sm:grid-cols-3 sm:gap-4 sm:p-5">
-              <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-4 text-center">
-                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/34">
-                  Type
-                </p>
-                <p className="mt-2 text-sm font-medium text-white/88">
-                  Full export
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-4 text-center">
-                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/34">
-                  Status
-                </p>
-                <p className="mt-2 text-sm font-medium text-white/88">
-                  Ready
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-4 py-4 text-center">
-                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-white/34">
-                  Output
-                </p>
-                <p className="mt-2 text-sm font-medium text-white/88">
-                  Restored audio
-                </p>
-              </div>
             </div>
 
             <div className="mt-10 flex flex-col items-center gap-4">
@@ -94,7 +61,7 @@ export default async function DownloadPage({
               </button>
 
               <p className="text-xs text-white/30">
-                The restored file will be available here once export delivery is connected.
+                Export delivery will be connected next.
               </p>
 
               <Link
