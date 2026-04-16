@@ -25,17 +25,19 @@ export default function ProcessingPage() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(63,126,255,0.22)_0%,rgba(122,55,255,0.18)_28%,rgba(255,0,199,0.12)_48%,rgba(5,8,22,0)_72%)]" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-500/10 blur-3xl" />
-
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <div className="relative flex h-[180px] w-[180px] items-center justify-center">
-          <div className="absolute h-[180px] w-[180px] animate-pulse rounded-full border border-cyan-300/20 bg-cyan-400/5 blur-[2px]" />
-          <div className="absolute h-[132px] w-[132px] rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md" />
-          <div className="absolute h-[112px] w-[112px] animate-spin rounded-full border border-transparent border-t-cyan-300/80 border-r-fuchsia-400/70" style={{ animationDuration: "2.4s" }} />
-          <div className="absolute h-[84px] w-[84px] animate-spin rounded-full border border-transparent border-b-blue-400/80 border-l-cyan-200/70" style={{ animationDuration: "1.8s", animationDirection: "reverse" }} />
-          <div className="absolute h-[34px] w-[34px] rounded-full bg-[linear-gradient(135deg,rgba(82,224,255,0.95)_0%,rgba(110,103,255,0.92)_52%,rgba(255,68,214,0.92)_100%)] shadow-[0_0_30px_rgba(96,165,250,0.45)]" />
+        <div className="relative flex h-[220px] w-[220px] items-center justify-center">
+          <div className="absolute h-[220px] w-[220px] rounded-full bg-cyan-400/8 blur-3xl" />
+          <div className="absolute h-[178px] w-[178px] rounded-full border border-white/8 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0.02)_26%,rgba(34,18,84,0.42)_62%,rgba(11,15,40,0.86)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_40px_rgba(38,99,255,0.14)]" />
+          <div className="absolute h-[146px] w-[146px] animate-[spin_8s_linear_infinite] rounded-full">
+            <div
+              className="absolute left-[18px] top-[16px] h-[68px] w-[88px] rotate-[-22deg] rounded-[58%_42%_52%_48%/44%_58%_42%_56%] bg-[radial-gradient(circle_at_35%_35%,rgba(255,255,255,0.95)_0%,rgba(255,210,245,0.96)_26%,rgba(255,112,232,0.92)_70%,rgba(168,85,247,0.86)_100%)] blur-[0.5px] shadow-[0_0_24px_rgba(255,86,214,0.45)]"
+            />
+            <div
+              className="absolute bottom-[14px] right-[14px] h-[64px] w-[84px] rotate-[-18deg] rounded-[44%_56%_50%_50%/58%_42%_58%_42%] bg-[radial-gradient(circle_at_65%_35%,rgba(170,255,255,0.95)_0%,rgba(58,244,255,0.92)_36%,rgba(27,188,255,0.9)_72%,rgba(59,130,246,0.82)_100%)] blur-[0.5px] shadow-[0_0_24px_rgba(34,211,238,0.42)]"
+            />
+          </div>
+          <div className="absolute h-[178px] w-[178px] rounded-full border border-fuchsia-300/8" />
         </div>
 
         <p className="mt-10 text-xs font-medium uppercase tracking-[0.3em] text-white/40">
@@ -43,7 +45,7 @@ export default function ProcessingPage() {
         </p>
 
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-          Restoring clarity...
+          Fixing audio...
         </h1>
 
         <p className="mt-4 max-w-md text-sm leading-7 text-white/55 sm:text-base">
