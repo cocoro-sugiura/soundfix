@@ -2,6 +2,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
+from mimetypes import guess_type
 
 from app.core.config import ALLOWED_EXTENSIONS, MAX_FILE_SIZE_BYTES
 from app.models.job import JobStatus
@@ -111,9 +112,11 @@ def get_preview_file_path(job_id: str) -> FileResponse:
     if not preview_path.exists():
         raise HTTPException(status_code=404, detail="Preview file not found")
 
+    media_type, _ = guess_type(str(preview_path))
+
     return FileResponse(
-        path=preview_path,
-        media_type="audio/mpeg" if preview_path.suffix.lower() == ".mp3" else "audio/wav",
+        path=str(preview_path),
+        media_type=media_type or "application/octet-stream",
         filename=preview_path.name,
     )
 
@@ -130,8 +133,10 @@ def get_full_file_path(job_id: str) -> FileResponse:
     if not full_path.exists():
         raise HTTPException(status_code=404, detail="Full file not found")
 
+    media_type, _ = guess_type(str(full_path))
+
     return FileResponse(
-        path=full_path,
-        media_type="audio/mpeg" if full_path.suffix.lower() == ".mp3" else "audio/wav",
+        path=str(full_path),
+        media_type=media_type or "application/octet-stream",
         filename=full_path.name,
     )
