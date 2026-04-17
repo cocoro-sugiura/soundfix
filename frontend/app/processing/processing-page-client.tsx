@@ -8,11 +8,12 @@ export default function ProcessingPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedFileName = searchParams.get("file") ?? "";
+  const jobId = searchParams.get("job") ?? "";
   const processingStep = searchParams.get("step") ?? "preview";
   const isFullProcessing = processingStep === "full";
 
   useEffect(() => {
-    if (!selectedFileName) {
+    if (!selectedFileName && !jobId) {
       router.replace("/");
       return;
     }
@@ -27,7 +28,17 @@ export default function ProcessingPageClient() {
       );
 
       if (isFullProcessing) {
+        if (jobId) {
+          router.replace(`/download?job=${encodeURIComponent(jobId)}`);
+          return;
+        }
+
         router.replace(`/download?file=${encodeURIComponent(selectedFileName)}`);
+        return;
+      }
+
+      if (jobId) {
+        router.replace(`/preview?job=${encodeURIComponent(jobId)}`);
         return;
       }
 
@@ -37,7 +48,7 @@ export default function ProcessingPageClient() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [isFullProcessing, router, selectedFileName]);
+  }, [isFullProcessing, jobId, router, selectedFileName]);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
@@ -69,7 +80,7 @@ export default function ProcessingPageClient() {
         </div>
 
         <p className="mt-6 text-xs text-white/28">
-          {selectedFileName}
+          {selectedFileName || jobId}
         </p>
       </div>
     </main>
