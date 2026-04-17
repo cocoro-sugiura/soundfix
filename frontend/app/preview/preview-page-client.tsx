@@ -1,22 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
-import { getPreviewAudioFile } from "../../lib/preview-audio-store";
+import {
+  getPreviewAudioFile,
+  setPreviewAudioErrorMessage,
+  setPreviewAudioStatus,
+  setPreviewAudioUrls,
+} from "../../lib/preview-audio-store";
 
 const PREVIEW_WAVEFORM_WIDTH = 960;
 const PREVIEW_WAVEFORM_HEIGHT = 96;
 const PREVIEW_WAVEFORM_SAMPLE_COUNT = 720;
+const BACKEND_BASE_URL =
+  process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
+
+type BackendJobStatusResponse = {
+  jobId: string;
+  status: "idle" | "uploaded" | "preview_processing" | "preview_ready" | "full_processing" | "full_ready" | "failed";
+  previewUrl: string | null;
+  fullUrl: string | null;
+  error: string | null;
+};
 
 export default function PreviewPageClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const beforeAudioRef = useRef<HTMLAudioElement | null>(null);
   const afterAudioRef = useRef<HTMLAudioElement | null>(null);
   const beforeWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const afterWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
-  const jobId = previewAudio.jobId || "";
+  const jobId = searchParams.get("job") || previewAudio.jobId || "";
   const fileName = previewAudio.fileName || "FILENAME.wav";
   const beforeAudioUrl = previewAudio.previewBeforeAudioUrl || "";
   const afterAudioUrl = previewAudio.previewAfterAudioUrl || "";
@@ -32,6 +48,64 @@ export default function PreviewPageClient() {
   const [afterCurrentTime, setAfterCurrentTime] = useState(0);
   const [beforeDuration, setBeforeDuration] = useState(0);
   const [afterDuration, setAfterDuration] = useState(0);
+
+  useEffect(() => {
+    if (!jobId) {
+      router.replace("/");
+      return;
+    }
+
+    let isCancelled = false;
+
+    const syncPreviewState = async () => {
+      try {
+        const response = await fetch(
+          `${BACKEND_BASE_URL}/jobs/${encodeURIComponent(jobId)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load preview.");
+        }
+
+        const job = await response.json() as BackendJobStatusResponse;
+
+        if (isCancelled) {
+          return;
+        }
+
+        setPreviewAudioStatus(job.status);
+        setPreviewAudioErrorMessage(job.error || "");
+
+        if (job.previewUrl) {
+          setPreviewAudioUrls({
+            previewAfterAudioUrl: `${BACKEND_BASE_URL}${job.previewUrl}`,
+          });
+        }
+
+        if (job.fullUrl) {
+          setPreviewAudioUrls({
+            fullAfterAudioUrl: `${BACKEND_BASE_URL}${job.fullUrl}`,
+          });
+        }
+
+        if (job.status === "failed") {
+          router.replace("/");
+        }
+      } catch {
+        router.replace("/");
+      }
+    };
+
+    void syncPreviewState();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [jobId, router]);
 
   useEffect(() => {
     const audioElement = beforeAudioRef.current;
@@ -511,15 +585,8 @@ export default function PreviewPageClient() {
   };
 
   const handleContinueToDownload = () => {
-    if (jobId) {
-      router.push(
-        `/processing?step=full&job=${encodeURIComponent(jobId)}`,
-      );
-      return;
-    }
-
     router.push(
-      `/processing?step=full&file=${encodeURIComponent(fileName)}`,
+      `/processing?step=full&job=${encodeURIComponent(jobId)}`,
     );
   };
 
