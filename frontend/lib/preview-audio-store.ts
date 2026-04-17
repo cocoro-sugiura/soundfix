@@ -1,26 +1,62 @@
 type PreviewAudioState = {
+  jobId: string;
+  status: "idle" | "uploaded" | "preview_ready" | "full_ready";
   fileName: string;
-  file: File | null;
-  audioUrl: string;
+  originalFile: File | null;
+  originalAudioUrl: string;
+  previewBeforeAudioUrl: string;
+  previewAfterAudioUrl: string;
+  fullAfterAudioUrl: string;
   fileType: string;
 };
 
 const previewAudioState: PreviewAudioState = {
+  jobId: "",
+  status: "idle",
   fileName: "",
-  file: null,
-  audioUrl: "",
+  originalFile: null,
+  originalAudioUrl: "",
+  previewBeforeAudioUrl: "",
+  previewAfterAudioUrl: "",
+  fullAfterAudioUrl: "",
   fileType: "",
 };
 
-export function setPreviewAudioFile(file: File) {
-  if (previewAudioState.audioUrl) {
-    URL.revokeObjectURL(previewAudioState.audioUrl);
+function revokeAudioUrl(audioUrl: string) {
+  if (!audioUrl) {
+    return;
   }
 
+  URL.revokeObjectURL(audioUrl);
+}
+
+export function setPreviewAudioFile(file: File) {
+  revokeAudioUrl(previewAudioState.originalAudioUrl);
+  revokeAudioUrl(previewAudioState.previewBeforeAudioUrl);
+  revokeAudioUrl(previewAudioState.previewAfterAudioUrl);
+  revokeAudioUrl(previewAudioState.fullAfterAudioUrl);
+
+  const objectUrl = URL.createObjectURL(file);
+
+  previewAudioState.jobId = "";
+  previewAudioState.status = "uploaded";
   previewAudioState.fileName = file.name;
-  previewAudioState.file = file;
-  previewAudioState.audioUrl = URL.createObjectURL(file);
+  previewAudioState.originalFile = file;
+  previewAudioState.originalAudioUrl = objectUrl;
+  previewAudioState.previewBeforeAudioUrl = objectUrl;
+  previewAudioState.previewAfterAudioUrl = objectUrl;
+  previewAudioState.fullAfterAudioUrl = objectUrl;
   previewAudioState.fileType = file.type;
+}
+
+export function setPreviewAudioJob(jobId: string) {
+  previewAudioState.jobId = jobId;
+}
+
+export function setPreviewAudioStatus(
+  status: PreviewAudioState["status"],
+) {
+  previewAudioState.status = status;
 }
 
 export function getPreviewAudioFile() {
@@ -28,12 +64,36 @@ export function getPreviewAudioFile() {
 }
 
 export function clearPreviewAudioFile() {
-  if (previewAudioState.audioUrl) {
-    URL.revokeObjectURL(previewAudioState.audioUrl);
+  revokeAudioUrl(previewAudioState.originalAudioUrl);
+
+  if (
+    previewAudioState.previewBeforeAudioUrl &&
+    previewAudioState.previewBeforeAudioUrl !== previewAudioState.originalAudioUrl
+  ) {
+    revokeAudioUrl(previewAudioState.previewBeforeAudioUrl);
   }
 
+  if (
+    previewAudioState.previewAfterAudioUrl &&
+    previewAudioState.previewAfterAudioUrl !== previewAudioState.originalAudioUrl
+  ) {
+    revokeAudioUrl(previewAudioState.previewAfterAudioUrl);
+  }
+
+  if (
+    previewAudioState.fullAfterAudioUrl &&
+    previewAudioState.fullAfterAudioUrl !== previewAudioState.originalAudioUrl
+  ) {
+    revokeAudioUrl(previewAudioState.fullAfterAudioUrl);
+  }
+
+  previewAudioState.jobId = "";
+  previewAudioState.status = "idle";
   previewAudioState.fileName = "";
-  previewAudioState.file = null;
-  previewAudioState.audioUrl = "";
+  previewAudioState.originalFile = null;
+  previewAudioState.originalAudioUrl = "";
+  previewAudioState.previewBeforeAudioUrl = "";
+  previewAudioState.previewAfterAudioUrl = "";
+  previewAudioState.fullAfterAudioUrl = "";
   previewAudioState.fileType = "";
 }
