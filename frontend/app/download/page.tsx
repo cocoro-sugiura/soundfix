@@ -3,6 +3,7 @@ import DownloadPageClient from "./download-page-client";
 type DownloadPageProps = {
   searchParams?: Promise<{
     file?: string;
+    job?: string;
   }>;
 };
 

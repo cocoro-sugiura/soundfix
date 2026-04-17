@@ -9,6 +9,7 @@ import {
 import { useRouter } from "next/navigation";
 import {
   clearPreviewAudioFile,
+  getPreviewAudioFile,
   setPreviewAudioFile,
   setPreviewAudioJob,
   setPreviewAudioStatus,
@@ -107,7 +108,16 @@ export default function Home() {
       return;
     }
 
-    router.push(`/processing?file=${encodeURIComponent(selectedFileName)}`);
+    const previewAudio = getPreviewAudioFile();
+
+    if (previewAudio.jobId) {
+      router.push(
+        `/processing?step=preview&job=${encodeURIComponent(previewAudio.jobId)}`,
+      );
+      return;
+    }
+
+    router.push(`/processing?step=preview&file=${encodeURIComponent(selectedFileName)}`);
   };
 
   return (
