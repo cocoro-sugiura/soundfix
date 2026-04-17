@@ -296,21 +296,19 @@ export default function Home() {
                 {selectedFileName ? "Change file" : "Select file"}
               </button>
 
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void handleContinueToPreview();
-                }}
-                disabled={!selectedFileName || !hasSelectedAudio || isPreparingUpload || !isUploadReady}
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {isPreparingUpload
-                  ? "Preparing..."
-                  : isUploadReady
-                    ? "Continue to preview"
-                    : "Waiting for upload..."}
-              </button>
+              {selectedFileName ? (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleContinueToPreview();
+                  }}
+                  disabled={!selectedFileName || !hasSelectedAudio || isPreparingUpload || !isUploadReady}
+                  className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {isPreparingUpload ? "Preparing..." : "Continue to preview"}
+                </button>
+              ) : null}
             </div>
 
             <p className="mt-5 text-xs text-white/32">WAV, MP3 only</p>
