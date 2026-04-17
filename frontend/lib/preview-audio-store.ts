@@ -46,14 +46,15 @@ export function setPreviewAudioFile(file: File) {
   const objectUrl = URL.createObjectURL(file);
 
   previewAudioState.jobId = "";
-  previewAudioState.status = "uploaded";
+  previewAudioState.status = "idle";
   previewAudioState.fileName = file.name;
   previewAudioState.originalFile = file;
   previewAudioState.originalAudioUrl = objectUrl;
   previewAudioState.previewBeforeAudioUrl = objectUrl;
-  previewAudioState.previewAfterAudioUrl = objectUrl;
-  previewAudioState.fullAfterAudioUrl = objectUrl;
+  previewAudioState.previewAfterAudioUrl = "";
+  previewAudioState.fullAfterAudioUrl = "";
   previewAudioState.fileType = file.type;
+  previewAudioState.errorMessage = "";
 }
 
 export function setPreviewAudioJob(jobId: string) {
@@ -62,6 +63,48 @@ export function setPreviewAudioJob(jobId: string) {
 
 export function setPreviewAudioStatus(status: SoundfixJobStatus) {
   previewAudioState.status = status;
+}
+
+export function setPreviewAudioErrorMessage(errorMessage: string) {
+  previewAudioState.errorMessage = errorMessage;
+}
+
+export function setPreviewAudioUrls({
+  previewBeforeAudioUrl,
+  previewAfterAudioUrl,
+  fullAfterAudioUrl,
+}: {
+  previewBeforeAudioUrl?: string;
+  previewAfterAudioUrl?: string;
+  fullAfterAudioUrl?: string;
+}) {
+  if (
+    previewAfterAudioUrl &&
+    previewAudioState.previewAfterAudioUrl &&
+    previewAudioState.previewAfterAudioUrl !== previewAudioState.originalAudioUrl
+  ) {
+    revokeAudioUrl(previewAudioState.previewAfterAudioUrl);
+  }
+
+  if (
+    fullAfterAudioUrl &&
+    previewAudioState.fullAfterAudioUrl &&
+    previewAudioState.fullAfterAudioUrl !== previewAudioState.originalAudioUrl
+  ) {
+    revokeAudioUrl(previewAudioState.fullAfterAudioUrl);
+  }
+
+  if (previewBeforeAudioUrl !== undefined) {
+    previewAudioState.previewBeforeAudioUrl = previewBeforeAudioUrl;
+  }
+
+  if (previewAfterAudioUrl !== undefined) {
+    previewAudioState.previewAfterAudioUrl = previewAfterAudioUrl;
+  }
+
+  if (fullAfterAudioUrl !== undefined) {
+    previewAudioState.fullAfterAudioUrl = fullAfterAudioUrl;
+  }
 }
 
 export function applyMockJobResponse(job: SoundfixJobResponse) {

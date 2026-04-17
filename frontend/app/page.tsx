@@ -10,9 +10,11 @@ import { useRouter } from "next/navigation";
 import {
   clearPreviewAudioFile,
   getPreviewAudioFile,
+  setPreviewAudioErrorMessage,
   setPreviewAudioFile,
   setPreviewAudioJob,
   setPreviewAudioStatus,
+  setPreviewAudioUrls,
 } from "../lib/preview-audio-store";
 
 const SUPPORTED_AUDIO_TYPES = [
@@ -23,6 +25,8 @@ const SUPPORTED_AUDIO_TYPES = [
 ];
 
 const SUPPORTED_AUDIO_EXTENSIONS = [".wav", ".mp3"];
+const BACKEND_BASE_URL =
+  process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
 
 export default function Home() {
   const router = useRouter();
@@ -31,6 +35,7 @@ export default function Home() {
   const [hasSelectedAudio, setHasSelectedAudio] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadErrorMessage, setUploadErrorMessage] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSelectFile = () => {
     inputRef.current?.click();
@@ -57,12 +62,16 @@ export default function Home() {
       return;
     }
 
-    const generatedJobId = `job_${crypto.randomUUID()}`;
-
     setUploadErrorMessage("");
+    setPreviewAudioErrorMessage("");
     setPreviewAudioFile(file);
-    setPreviewAudioJob(generatedJobId);
-    setPreviewAudioStatus("uploaded");
+    setPreviewAudioJob("");
+    setPreviewAudioStatus("idle");
+    setPreviewAudioUrls({
+      previewBeforeAudioUrl: URL.createObjectURL(file),
+      previewAfterAudioUrl: "",
+      fullAfterAudioUrl: "",
+    });
     setSelectedFileName(file.name);
     setHasSelectedAudio(true);
   };
@@ -103,21 +112,58 @@ export default function Home() {
     applySelectedFile(file);
   };
 
-  const handleContinueToPreview = () => {
-    if (!selectedFileName || !hasSelectedAudio) {
+  const handleContinueToPreview = async () => {
+    if (!selectedFileName || !hasSelectedAudio || isUploading) {
       return;
     }
 
     const previewAudio = getPreviewAudioFile();
 
-    if (previewAudio.jobId) {
-      router.push(
-        `/processing?step=preview&job=${encodeURIComponent(previewAudio.jobId)}`,
-      );
+    if (!previewAudio.originalFile) {
+      setUploadErrorMessage("No audio file is selected.");
       return;
     }
 
-    router.push(`/processing?step=preview&file=${encodeURIComponent(selectedFileName)}`);
+    setIsUploading(true);
+    setUploadErrorMessage("");
+    setPreviewAudioErrorMessage("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", previewAudio.originalFile);
+
+      const response = await fetch(`${BACKEND_BASE_URL}/jobs/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed.");
+      }
+
+      const data = await response.json() as {
+        jobId: string;
+        status: "uploaded";
+      };
+
+      setPreviewAudioJob(data.jobId);
+      setPreviewAudioStatus(data.status);
+
+      router.push(
+        `/processing?step=preview&job=${encodeURIComponent(data.jobId)}`,
+      );
+    } catch (error) {
+      clearPreviewAudioFile();
+      setSelectedFileName("");
+      setHasSelectedAudio(false);
+      setUploadErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to upload audio file.",
+      );
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -200,12 +246,12 @@ export default function Home() {
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
-                  handleContinueToPreview();
+                  void handleContinueToPreview();
                 }}
-                disabled={!selectedFileName || !hasSelectedAudio}
+                disabled={!selectedFileName || !hasSelectedAudio || isUploading}
                 className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Continue to preview
+                {isUploading ? "Uploading..." : "Continue to preview"}
               </button>
             </div>
 
