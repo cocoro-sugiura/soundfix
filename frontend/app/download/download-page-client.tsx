@@ -40,7 +40,6 @@ export default function DownloadPageClient({
   const previewAudio = getPreviewAudioFile();
   const resolvedJobId = searchParams.get("job") || jobId || previewAudio.jobId || "";
   const audioUrl = previewAudio.fullAfterAudioUrl || "";
-  const previewFile = previewAudio.originalFile;
   const displayFileName =
     previewAudio.fileName || fileName || previewFile?.name || "FILENAME.wav";
   const [isPlaying, setIsPlaying] = useState(false);
@@ -159,7 +158,7 @@ export default function DownloadPageClient({
 
   useEffect(() => {
     const buildWaveformPoints = async () => {
-      if (!previewFile) {
+      if (!audioUrl) {
         setWaveformPoints([]);
         return;
       }
@@ -167,7 +166,8 @@ export default function DownloadPageClient({
       const audioContext = new window.AudioContext();
 
       try {
-        const arrayBuffer = await previewFile.arrayBuffer();
+        const response = await fetch(audioUrl);
+        const arrayBuffer = await response.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         const channelData = audioBuffer.getChannelData(0);
         const blockSize = Math.max(
@@ -208,7 +208,7 @@ export default function DownloadPageClient({
     };
 
     void buildWaveformPoints();
-  }, [previewFile]);
+  }, [audioUrl]);
 
   useEffect(() => {
     const canvas = waveformCanvasRef.current;

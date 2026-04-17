@@ -440,18 +440,58 @@ export default function PreviewPageClient() {
   }, [afterWaveformPoints, afterPlaybackProgress]);
 
   useEffect(() => {
-    if (!beforeWaveformPoints.length) {
-      setAfterWaveformPoints([]);
-      return;
-    }
+    const buildAfterWaveformPoints = async () => {
+      if (!afterAudioUrl) {
+        setAfterWaveformPoints([]);
+        return;
+      }
 
-    const derivedAfterPoints = beforeWaveformPoints.map((point, index) => {
-      const modulation = 0.88 + ((index % 9) / 40);
-      return Math.max(0.02, Math.min(1, point * modulation));
-    });
+      const audioContext = new window.AudioContext();
 
-    setAfterWaveformPoints(derivedAfterPoints);
-  }, [beforeWaveformPoints]);
+      try {
+        const response = await fetch(afterAudioUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        const channelData = audioBuffer.getChannelData(0);
+        const blockSize = Math.max(
+          1,
+          Math.floor(channelData.length / PREVIEW_WAVEFORM_SAMPLE_COUNT),
+        );
+
+        const points = Array.from(
+          { length: PREVIEW_WAVEFORM_SAMPLE_COUNT },
+          (_, index) => {
+            const start = index * blockSize;
+            const end = Math.min(start + blockSize, channelData.length);
+
+            let peak = 0;
+
+            for (let i = start; i < end; i += 1) {
+              const amplitude = Math.abs(channelData[i]);
+
+              if (amplitude > peak) {
+                peak = amplitude;
+              }
+            }
+
+            return peak;
+          },
+        );
+
+        const normalizedPoints = points.map((point) =>
+          Math.max(0.02, Math.min(1, point)),
+        );
+
+        setAfterWaveformPoints(normalizedPoints);
+      } catch {
+        setAfterWaveformPoints([]);
+      } finally {
+        await audioContext.close();
+      }
+    };
+
+    void buildAfterWaveformPoints();
+  }, [afterAudioUrl]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
