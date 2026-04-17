@@ -61,6 +61,14 @@ export default function DownloadPageClient({
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
+    console.log("[download-audio-url]", {
+      audioUrl,
+      storeStatus: previewAudio.status,
+      resolvedJobId,
+    });
+  }, [audioUrl, previewAudio.status, resolvedJobId]);
+
+  useEffect(() => {
     if (!resolvedJobId) {
       router.replace("/");
       return;
@@ -183,13 +191,73 @@ export default function DownloadPageClient({
     }
 
     if (audioElement.getAttribute("src") !== audioUrl) {
+      console.log("[download-src-set]", {
+        prevSrc: audioElement.getAttribute("src"),
+        nextSrc: audioUrl,
+      });
+
       audioElement.setAttribute("src", audioUrl);
       audioElement.load();
+
       setIsPlaying(false);
       setCurrentTime(0);
       setDuration(0);
       setPlaybackProgress(0);
     }
+  }, [audioUrl]);  
+
+  useEffect(() => {
+    const audioElement = audioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    const logEvent = (eventName: string) => {
+      console.log(`[download-audio:${eventName}]`, {
+        currentTime: audioElement.currentTime,
+        duration: audioElement.duration,
+        paused: audioElement.paused,
+        readyState: audioElement.readyState,
+        networkState: audioElement.networkState,
+        src: audioElement.currentSrc || audioElement.getAttribute("src"),
+      });
+    };
+
+    const handleLoadStart = () => logEvent("loadstart");
+    const handleLoadedMetadata = () => logEvent("loadedmetadata");
+    const handleLoadedData = () => logEvent("loadeddata");
+    const handleCanPlay = () => logEvent("canplay");
+    const handleSeeking = () => logEvent("seeking");
+    const handleSeeked = () => logEvent("seeked");
+    const handleTimeUpdate = () => logEvent("timeupdate");
+    const handlePlay = () => logEvent("play");
+    const handlePause = () => logEvent("pause");
+    const handleEnded = () => logEvent("ended");
+
+    audioElement.addEventListener("loadstart", handleLoadStart);
+    audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audioElement.addEventListener("loadeddata", handleLoadedData);
+    audioElement.addEventListener("canplay", handleCanPlay);
+    audioElement.addEventListener("seeking", handleSeeking);
+    audioElement.addEventListener("seeked", handleSeeked);
+    audioElement.addEventListener("timeupdate", handleTimeUpdate);
+    audioElement.addEventListener("play", handlePlay);
+    audioElement.addEventListener("pause", handlePause);
+    audioElement.addEventListener("ended", handleEnded);
+
+    return () => {
+      audioElement.removeEventListener("loadstart", handleLoadStart);
+      audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audioElement.removeEventListener("loadeddata", handleLoadedData);
+      audioElement.removeEventListener("canplay", handleCanPlay);
+      audioElement.removeEventListener("seeking", handleSeeking);
+      audioElement.removeEventListener("seeked", handleSeeked);
+      audioElement.removeEventListener("timeupdate", handleTimeUpdate);
+      audioElement.removeEventListener("play", handlePlay);
+      audioElement.removeEventListener("pause", handlePause);
+      audioElement.removeEventListener("ended", handleEnded);
+    };
   }, [audioUrl]);  
 
   useEffect(() => {
@@ -407,11 +475,23 @@ export default function DownloadPageClient({
 
     audioElement.currentTime = nextTime;
 
-    console.log("[download-waveform-seek]", {
+    console.log("[download-waveform-seek:immediate]", {
       target: nextTime,
       actual: audioElement.currentTime,
       duration: audioElement.duration,
+      src: audioElement.currentSrc || audioElement.getAttribute("src"),
     });
+
+    window.setTimeout(() => {
+      console.log("[download-waveform-seek:after-100ms]", {
+        target: nextTime,
+        actual: audioElement.currentTime,
+        duration: audioElement.duration,
+        paused: audioElement.paused,
+        readyState: audioElement.readyState,
+        src: audioElement.currentSrc || audioElement.getAttribute("src"),
+      });
+    }, 100);
 
     setCurrentTime(audioElement.currentTime);
     setPlaybackProgress(
