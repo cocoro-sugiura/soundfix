@@ -1,6 +1,12 @@
 type PreviewAudioState = {
   jobId: string;
-  status: "idle" | "uploaded" | "preview_ready" | "full_ready";
+  status:
+    | "idle"
+    | "uploaded"
+    | "preview_processing"
+    | "preview_ready"
+    | "full_processing"
+    | "full_ready";
   fileName: string;
   originalFile: File | null;
   originalAudioUrl: string;

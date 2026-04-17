@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { setPreviewAudioStatus } from "../../lib/preview-audio-store";
 
 export default function ProcessingPageClient() {
   const router = useRouter();
@@ -16,7 +17,15 @@ export default function ProcessingPageClient() {
       return;
     }
 
+    setPreviewAudioStatus(
+      isFullProcessing ? "full_processing" : "preview_processing",
+    );
+
     const timeoutId = window.setTimeout(() => {
+      setPreviewAudioStatus(
+        isFullProcessing ? "full_ready" : "preview_ready",
+      );
+
       if (isFullProcessing) {
         router.replace(`/download?file=${encodeURIComponent(selectedFileName)}`);
         return;
