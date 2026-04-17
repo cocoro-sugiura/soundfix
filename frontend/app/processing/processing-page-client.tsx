@@ -2,7 +2,10 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setPreviewAudioStatus } from "../../lib/preview-audio-store";
+import {
+  getPreviewAudioFile,
+  setPreviewAudioStatus,
+} from "../../lib/preview-audio-store";
 
 export default function ProcessingPageClient() {
   const router = useRouter();
@@ -22,31 +25,46 @@ export default function ProcessingPageClient() {
       isFullProcessing ? "full_processing" : "preview_processing",
     );
 
-    const timeoutId = window.setTimeout(() => {
-      setPreviewAudioStatus(
-        isFullProcessing ? "full_ready" : "preview_ready",
-      );
+    const intervalId = window.setInterval(() => {
+      const current = getPreviewAudioFile();
 
-      if (isFullProcessing) {
+      const isPreviewReady = current.status === "preview_ready";
+      const isFullReady = current.status === "full_ready";
+
+      if (!isFullProcessing && isPreviewReady) {
+        window.clearInterval(intervalId);
+
+        if (jobId) {
+          router.replace(`/preview?job=${encodeURIComponent(jobId)}`);
+          return;
+        }
+
+        router.replace(`/preview?file=${encodeURIComponent(selectedFileName)}`);
+        return;
+      }
+
+      if (isFullProcessing && isFullReady) {
+        window.clearInterval(intervalId);
+
         if (jobId) {
           router.replace(`/download?job=${encodeURIComponent(jobId)}`);
           return;
         }
 
         router.replace(`/download?file=${encodeURIComponent(selectedFileName)}`);
-        return;
       }
+    }, 1500);
 
-      if (jobId) {
-        router.replace(`/preview?job=${encodeURIComponent(jobId)}`);
-        return;
-      }
-
-      router.replace(`/preview?file=${encodeURIComponent(selectedFileName)}`);
-    }, 10000);
+    // 仮: 今はまだバックエンドがないので疑似的に完了させる
+    const mockTimeoutId = window.setTimeout(() => {
+      setPreviewAudioStatus(
+        isFullProcessing ? "full_ready" : "preview_ready",
+      );
+    }, 3000);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
+      window.clearTimeout(mockTimeoutId);
     };
   }, [isFullProcessing, jobId, router, selectedFileName]);
 
