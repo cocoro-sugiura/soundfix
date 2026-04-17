@@ -41,7 +41,7 @@ export default function DownloadPageClient({
   const resolvedJobId = searchParams.get("job") || jobId || previewAudio.jobId || "";
   const audioUrl = previewAudio.fullAfterAudioUrl || "";
   const displayFileName =
-    previewAudio.fileName || fileName || previewFile?.name || "FILENAME.wav";
+    previewAudio.fileName || fileName || "FILENAME.wav";
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveformPoints, setWaveformPoints] = useState<number[]>([]);
   const [playbackProgress, setPlaybackProgress] = useState(0);
@@ -351,10 +351,9 @@ export default function DownloadPageClient({
     setIsPlaying(false);
   };
 
-  const handleWaveformSeek = async (event: MouseEvent<HTMLCanvasElement>) => {
+  const handleWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
     const audioElement = audioRef.current;
     const canvasElement = waveformCanvasRef.current;
-    const wasPlaying = !!audioElement && !audioElement.paused;
 
     if (
       !audioElement ||
@@ -371,15 +370,8 @@ export default function DownloadPageClient({
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-    setCurrentTime(audioElement.currentTime);
-    setPlaybackProgress(
-      audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
-    );
-
-    if (wasPlaying) {
-      await audioElement.play();
-      setIsPlaying(true);
-    }
+    setCurrentTime(nextTime);
+    setPlaybackProgress(ratio);
   };
 
   return (
