@@ -709,6 +709,7 @@ export default function PreviewPageClient() {
     audioElement: HTMLAudioElement | null,
     setCurrentTime: (time: number) => void,
     setPlaybackProgress: (progress: number) => void,
+    setIsPlaying: (isPlaying: boolean) => void,
   ) => {
     if (
       !audioElement ||
@@ -764,8 +765,10 @@ export default function PreviewPageClient() {
       if (wasPlaying) {
         try {
           await audioElement.play();
+          setIsPlaying(true);
         } catch (error) {
           console.log("[waveform-seek:resume-failed]", error);
+          setIsPlaying(false);
         }
       }
     }, 100);
@@ -778,6 +781,7 @@ export default function PreviewPageClient() {
       beforeAudioRef.current,
       setBeforeCurrentTime,
       setBeforePlaybackProgress,
+      setIsPlayingBefore,
     );
   };
 
@@ -788,6 +792,7 @@ export default function PreviewPageClient() {
       afterAudioRef.current,
       setAfterCurrentTime,
       setAfterPlaybackProgress,
+      setIsPlayingAfter,
     );
   };
 
