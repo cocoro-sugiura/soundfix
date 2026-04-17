@@ -221,6 +221,10 @@ export default function DownloadPageClient({
         readyState: audioElement.readyState,
         networkState: audioElement.networkState,
         src: audioElement.currentSrc || audioElement.getAttribute("src"),
+        seekableStart:
+          audioElement.seekable.length > 0 ? audioElement.seekable.start(0) : null,
+        seekableEnd:
+          audioElement.seekable.length > 0 ? audioElement.seekable.end(0) : null,
       });
     };
 
@@ -455,7 +459,7 @@ export default function DownloadPageClient({
     setIsPlaying(false);
   };
 
-  const handleWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
+  const handleWaveformSeek = async (event: MouseEvent<HTMLCanvasElement>) => {
     const audioElement = audioRef.current;
     const canvasElement = waveformCanvasRef.current;
 
@@ -472,31 +476,52 @@ export default function DownloadPageClient({
     const clickX = event.clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, clickX / rect.width));
     const nextTime = audioElement.duration * ratio;
+    const wasPlaying = !audioElement.paused;
 
-    audioElement.currentTime = nextTime;
-
-    console.log("[download-waveform-seek:immediate]", {
+    console.log("[download-waveform-seek:before]", {
       target: nextTime,
       actual: audioElement.currentTime,
       duration: audioElement.duration,
-      src: audioElement.currentSrc || audioElement.getAttribute("src"),
+      paused: audioElement.paused,
+      readyState: audioElement.readyState,
+      networkState: audioElement.networkState,
+      seekableRanges: audioElement.seekable.length,
     });
 
-    window.setTimeout(() => {
+    if (wasPlaying) {
+      audioElement.pause();
+    }
+
+    if (typeof audioElement.fastSeek === "function") {
+      audioElement.fastSeek(nextTime);
+    } else {
+      audioElement.currentTime = nextTime;
+    }
+
+    window.setTimeout(async () => {
       console.log("[download-waveform-seek:after-100ms]", {
         target: nextTime,
         actual: audioElement.currentTime,
         duration: audioElement.duration,
         paused: audioElement.paused,
         readyState: audioElement.readyState,
-        src: audioElement.currentSrc || audioElement.getAttribute("src"),
+        networkState: audioElement.networkState,
+        seekableRanges: audioElement.seekable.length,
       });
-    }, 100);
 
-    setCurrentTime(audioElement.currentTime);
-    setPlaybackProgress(
-      audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
-    );
+      setCurrentTime(audioElement.currentTime);
+      setPlaybackProgress(
+        audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
+      );
+
+      if (wasPlaying) {
+        try {
+          await audioElement.play();
+        } catch (error) {
+          console.log("[download-waveform-seek:resume-failed]", error);
+        }
+      }
+    }, 100);
   };
 
   return (
