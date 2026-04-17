@@ -135,12 +135,9 @@ export default function DownloadPageClient({
     };
 
     const handleLoadedMetadata = () => {
-      const safeDuration = audioElement.duration || 0;
-      setDuration(safeDuration);
-      setCurrentTime(audioElement.currentTime || 0);
-      setPlaybackProgress(
-        safeDuration > 0 ? audioElement.currentTime / safeDuration : 0,
-      );
+      setDuration(audioElement.duration || 0);
+      setCurrentTime(0);
+      setPlaybackProgress(0);
     };
 
     audioElement.addEventListener("ended", handleEnded);
@@ -370,14 +367,10 @@ export default function DownloadPageClient({
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-
-    window.requestAnimationFrame(() => {
-      const syncedTime = audioElement.currentTime;
-      setCurrentTime(syncedTime);
-      setPlaybackProgress(
-        audioElement.duration > 0 ? syncedTime / audioElement.duration : 0,
-      );
-    });
+    setCurrentTime(nextTime);
+    setPlaybackProgress(
+      audioElement.duration > 0 ? nextTime / audioElement.duration : 0,
+    );
   };
 
   return (

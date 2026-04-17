@@ -183,12 +183,9 @@ export default function PreviewPageClient() {
     };
 
     const handleLoadedMetadata = () => {
-      const safeDuration = audioElement.duration || 0;
-      setAfterDuration(safeDuration);
-      setAfterCurrentTime(audioElement.currentTime || 0);
-      setAfterPlaybackProgress(
-        safeDuration > 0 ? audioElement.currentTime / safeDuration : 0,
-      );
+      setAfterCurrentTime(0);
+      setAfterDuration(audioElement.duration || 0);
+      setAfterPlaybackProgress(0);
     };
 
     audioElement.addEventListener("ended", handleEnded);
@@ -608,14 +605,10 @@ export default function PreviewPageClient() {
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-
-    window.requestAnimationFrame(() => {
-      const syncedTime = audioElement.currentTime;
-      setCurrentTime(syncedTime);
-      setPlaybackProgress(
-        audioElement.duration > 0 ? syncedTime / audioElement.duration : 0,
-      );
-    });
+    setCurrentTime(nextTime);
+    setPlaybackProgress(
+      audioElement.duration > 0 ? nextTime / audioElement.duration : 0,
+    );
   };
 
   const handleBeforeWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
