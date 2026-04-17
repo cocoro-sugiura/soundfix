@@ -608,8 +608,14 @@ export default function PreviewPageClient() {
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-    setCurrentTime(nextTime);
-    setPlaybackProgress(ratio);
+
+    window.requestAnimationFrame(() => {
+      const syncedTime = audioElement.currentTime;
+      setCurrentTime(syncedTime);
+      setPlaybackProgress(
+        audioElement.duration > 0 ? syncedTime / audioElement.duration : 0,
+      );
+    });
   };
 
   const handleBeforeWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
