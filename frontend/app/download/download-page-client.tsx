@@ -517,8 +517,10 @@ export default function DownloadPageClient({
       if (wasPlaying) {
         try {
           await audioElement.play();
+          setIsPlaying(true);
         } catch (error) {
           console.log("[download-waveform-seek:resume-failed]", error);
+          setIsPlaying(false);
         }
       }
     }, 100);
