@@ -1,12 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MouseEvent, useEffect, useMemo, useRef, useState } from "react";
-import { getPreviewAudioFile } from "../../lib/preview-audio-store";
+import {
+  getPreviewAudioFile,
+  setPreviewAudioErrorMessage,
+  setPreviewAudioStatus,
+  setPreviewAudioUrls,
+} from "../../lib/preview-audio-store";
 
 const DOWNLOAD_WAVEFORM_WIDTH = 960;
 const DOWNLOAD_WAVEFORM_HEIGHT = 80;
 const DOWNLOAD_WAVEFORM_SAMPLE_COUNT = 720;
+const BACKEND_BASE_URL =
+  process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
+
+type BackendJobStatusResponse = {
+  jobId: string;
+  status: "idle" | "uploaded" | "preview_processing" | "preview_ready" | "full_processing" | "full_ready" | "failed";
+  previewUrl: string | null;
+  fullUrl: string | null;
+  error: string | null;
+};
 
 type DownloadPageClientProps = {
   fileName: string;
@@ -17,9 +33,12 @@ export default function DownloadPageClient({
   fileName,
   jobId,
 }: DownloadPageClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
+  const resolvedJobId = searchParams.get("job") || jobId || previewAudio.jobId || "";
   const audioUrl = previewAudio.fullAfterAudioUrl || "";
   const previewFile = previewAudio.originalFile;
   const [isPlaying, setIsPlaying] = useState(false);
@@ -27,6 +46,64 @@ export default function DownloadPageClient({
   const [playbackProgress, setPlaybackProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    if (!resolvedJobId) {
+      router.replace("/");
+      return;
+    }
+
+    let isCancelled = false;
+
+    const syncDownloadState = async () => {
+      try {
+        const response = await fetch(
+          `${BACKEND_BASE_URL}/jobs/${encodeURIComponent(resolvedJobId)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load full file.");
+        }
+
+        const job = await response.json() as BackendJobStatusResponse;
+
+        if (isCancelled) {
+          return;
+        }
+
+        setPreviewAudioStatus(job.status);
+        setPreviewAudioErrorMessage(job.error || "");
+
+        if (job.previewUrl) {
+          setPreviewAudioUrls({
+            previewAfterAudioUrl: `${BACKEND_BASE_URL}${job.previewUrl}`,
+          });
+        }
+
+        if (job.fullUrl) {
+          setPreviewAudioUrls({
+            fullAfterAudioUrl: `${BACKEND_BASE_URL}${job.fullUrl}`,
+          });
+        }
+
+        if (job.status === "failed") {
+          router.replace("/");
+        }
+      } catch {
+        router.replace("/");
+      }
+    };
+
+    void syncDownloadState();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [resolvedJobId, router]);  
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -323,7 +400,7 @@ export default function DownloadPageClient({
               </div>
 
               <p className="mt-4 break-all text-xl font-semibold tracking-tight text-white sm:text-[26px]">
-                {fileName || jobId || "FILENAME.wav"}
+                {fileName || resolvedJobId || "FILENAME.wav"}
               </p>
             </div>
 
@@ -365,10 +442,14 @@ export default function DownloadPageClient({
             </div>
 
             <div className="mt-8 flex flex-col items-center gap-4">
-              <button className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90">
+              <a
+                href={audioUrl}
+                download
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90"
+              >
                 <i className="fa-solid fa-arrow-down-to-bracket" aria-hidden="true" />
                 <span>Download file</span>
-              </button>
+              </a>
 
               <Link
                 href="/"
