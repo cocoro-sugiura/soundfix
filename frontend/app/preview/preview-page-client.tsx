@@ -437,6 +437,33 @@ export default function PreviewPageClient() {
   }, [afterWaveformPoints, afterPlaybackProgress]);
 
   useEffect(() => {
+    const audioElement = afterAudioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    if (!afterAudioUrl) {
+      audioElement.removeAttribute("src");
+      audioElement.load();
+      setIsPlayingAfter(false);
+      setAfterCurrentTime(0);
+      setAfterDuration(0);
+      setAfterPlaybackProgress(0);
+      return;
+    }
+
+    if (audioElement.src !== afterAudioUrl) {
+      audioElement.src = afterAudioUrl;
+      audioElement.load();
+      setIsPlayingAfter(false);
+      setAfterCurrentTime(0);
+      setAfterDuration(0);
+      setAfterPlaybackProgress(0);
+    }
+  }, [afterAudioUrl]);  
+
+  useEffect(() => {
     const buildAfterWaveformPoints = async () => {
       if (!afterAudioUrl) {
         setAfterWaveformPoints([]);
@@ -605,9 +632,16 @@ export default function PreviewPageClient() {
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-    setCurrentTime(nextTime);
+
+    console.log("[waveform-seek]", {
+      target: nextTime,
+      actual: audioElement.currentTime,
+      duration: audioElement.duration,
+    });
+
+    setCurrentTime(audioElement.currentTime);
     setPlaybackProgress(
-      audioElement.duration > 0 ? nextTime / audioElement.duration : 0,
+      audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
     );
   };
 
@@ -730,9 +764,7 @@ export default function PreviewPageClient() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-4">
-                    {afterAudioUrl ? (
-                      <audio ref={afterAudioRef} src={afterAudioUrl} preload="metadata" />
-                    ) : null}
+                    <audio ref={afterAudioRef} preload="metadata" />
 
                     <button
                       type="button"

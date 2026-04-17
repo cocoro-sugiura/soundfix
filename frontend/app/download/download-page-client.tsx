@@ -154,6 +154,33 @@ export default function DownloadPageClient({
   }, [audioUrl]);
 
   useEffect(() => {
+    const audioElement = audioRef.current;
+
+    if (!audioElement) {
+      return;
+    }
+
+    if (!audioUrl) {
+      audioElement.removeAttribute("src");
+      audioElement.load();
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+      setPlaybackProgress(0);
+      return;
+    }
+
+    if (audioElement.src !== audioUrl) {
+      audioElement.src = audioUrl;
+      audioElement.load();
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+      setPlaybackProgress(0);
+    }
+  }, [audioUrl]);  
+
+  useEffect(() => {
     const buildWaveformPoints = async () => {
       if (!audioUrl) {
         setWaveformPoints([]);
@@ -367,9 +394,16 @@ export default function DownloadPageClient({
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-    setCurrentTime(nextTime);
+
+    console.log("[download-waveform-seek]", {
+      target: nextTime,
+      actual: audioElement.currentTime,
+      duration: audioElement.duration,
+    });
+
+    setCurrentTime(audioElement.currentTime);
     setPlaybackProgress(
-      audioElement.duration > 0 ? nextTime / audioElement.duration : 0,
+      audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
     );
   };
 
@@ -425,9 +459,7 @@ export default function DownloadPageClient({
               </div>
 
               <div className="mt-4 flex items-center gap-4">
-                {audioUrl ? (
-                  <audio ref={audioRef} src={audioUrl} preload="metadata" />
-                ) : null}
+                <audio ref={audioRef} preload="metadata" />
 
                 <button
                   type="button"
