@@ -60,6 +60,48 @@ export default function PreviewPageClient() {
   const [afterCurrentTime, setAfterCurrentTime] = useState(0);
   const [beforeDuration, setBeforeDuration] = useState(0);
   const [afterDuration, setAfterDuration] = useState(0);
+  const [afterPlayableAudioUrl, setAfterPlayableAudioUrl] = useState("");
+
+  useEffect(() => {
+    let objectUrl = "";
+    let isCancelled = false;
+
+    const buildPlayableAfterAudioUrl = async () => {
+      if (!afterAudioUrl) {
+        setAfterPlayableAudioUrl("");
+        return;
+      }
+
+      try {
+        const response = await fetch(afterAudioUrl);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch after audio.");
+        }
+
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+
+        if (!isCancelled) {
+          setAfterPlayableAudioUrl(objectUrl);
+        }
+      } catch {
+        if (!isCancelled) {
+          setAfterPlayableAudioUrl(afterAudioUrl);
+        }
+      }
+    };
+
+    void buildPlayableAfterAudioUrl();
+
+    return () => {
+      isCancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [afterPlayableAudioUrl]);  
 
   useEffect(() => {
     console.log("[preview-after-url]", {
@@ -219,7 +261,7 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("timeupdate", handleTimeUpdate);
       audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, [afterAudioUrl]);
+  }, [afterPlayableAudioUrl]);
 
   useEffect(() => {
     const buildWaveformPoints = async () => {
@@ -463,39 +505,6 @@ export default function PreviewPageClient() {
       return;
     }
 
-    if (!afterAudioUrl) {
-      audioElement.removeAttribute("src");
-      audioElement.load();
-      setIsPlayingAfter(false);
-      setAfterCurrentTime(0);
-      setAfterDuration(0);
-      setAfterPlaybackProgress(0);
-      return;
-    }
-
-    if (audioElement.getAttribute("src") !== afterAudioUrl) {
-      console.log("[preview-after-src-set]", {
-        prevSrc: audioElement.getAttribute("src"),
-        nextSrc: afterAudioUrl,
-      });
-
-      audioElement.setAttribute("src", afterAudioUrl);
-      audioElement.load();
-
-      setIsPlayingAfter(false);
-      setAfterCurrentTime(0);
-      setAfterDuration(0);
-      setAfterPlaybackProgress(0);
-    }
-  }, [afterAudioUrl]);  
-
-  useEffect(() => {
-    const audioElement = afterAudioRef.current;
-
-    if (!audioElement) {
-      return;
-    }
-
     const logEvent = (eventName: string) => {
       console.log(`[preview-after-audio:${eventName}]`, {
         currentTime: audioElement.currentTime,
@@ -545,7 +554,7 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("pause", handlePause);
       audioElement.removeEventListener("ended", handleEnded);
     };
-  }, [afterAudioUrl]);  
+  }, [afterPlayableAudioUrl]);  
 
   useEffect(() => {
     const buildAfterWaveformPoints = async () => {
@@ -599,7 +608,7 @@ export default function PreviewPageClient() {
     };
 
     void buildAfterWaveformPoints();
-  }, [afterAudioUrl]);
+  }, [afterPlayableAudioUrl]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
@@ -881,7 +890,13 @@ export default function PreviewPageClient() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-4">
-                    <audio ref={afterAudioRef} preload="metadata" />
+                    {afterPlayableAudioUrl ? (
+                      <audio
+                        ref={afterAudioRef}
+                        src={afterPlayableAudioUrl}
+                        preload="metadata"
+                      />
+                    ) : null}
 
                     <button
                       type="button"
