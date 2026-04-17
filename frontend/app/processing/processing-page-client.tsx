@@ -28,6 +28,9 @@ export default function ProcessingPageClient() {
   const jobId = searchParams.get("job") ?? "";
   const processingStep = searchParams.get("step") ?? "preview";
   const isFullProcessing = processingStep === "full";
+  const previewAudio = getPreviewAudioFile();
+  const displayFileName =
+    previewAudio.fileName || selectedFileName || "Audio file";  
 
   useEffect(() => {
     if (!jobId) {
@@ -155,7 +158,7 @@ export default function ProcessingPageClient() {
         </div>
 
         <p className="mt-6 text-xs text-white/28">
-          {selectedFileName || jobId}
+          {displayFileName}
         </p>
       </div>
     </main>
