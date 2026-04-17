@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import {
   clearPreviewAudioFile,
   setPreviewAudioFile,
+  setPreviewAudioJob,
+  setPreviewAudioStatus,
 } from "../lib/preview-audio-store";
 
 const SUPPORTED_AUDIO_TYPES = [
@@ -54,8 +56,12 @@ export default function Home() {
       return;
     }
 
+    const generatedJobId = `job_${crypto.randomUUID()}`;
+
     setUploadErrorMessage("");
     setPreviewAudioFile(file);
+    setPreviewAudioJob(generatedJobId);
+    setPreviewAudioStatus("uploaded");
     setSelectedFileName(file.name);
     setHasSelectedAudio(true);
   };
