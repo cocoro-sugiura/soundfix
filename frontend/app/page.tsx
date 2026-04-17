@@ -35,7 +35,9 @@ export default function Home() {
   const [hasSelectedAudio, setHasSelectedAudio] = useState(false);
   const [isDragActive, setIsDragActive] = useState(false);
   const [uploadErrorMessage, setUploadErrorMessage] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [isPreparingUpload, setIsPreparingUpload] = useState(false);
+  const [isUploadReady, setIsUploadReady] = useState(false);
+  const [uploadProgressPercent, setUploadProgressPercent] = useState(0);  
 
   const handleSelectFile = () => {
     inputRef.current?.click();
@@ -51,6 +53,74 @@ export default function Home() {
       )
     );
   };
+
+  const uploadSelectedFile = async (file: File) => {
+    setIsPreparingUpload(true);
+    setIsUploadReady(false);
+    setUploadProgressPercent(10);
+    setUploadErrorMessage("");
+    setPreviewAudioErrorMessage("");
+    setPreviewAudioJob("");
+    setPreviewAudioStatus("idle");
+    setPreviewAudioUrls({
+      previewAfterAudioUrl: "",
+      fullAfterAudioUrl: "",
+    });
+
+    const progressSteps = [18, 29, 41, 54, 68, 79, 89];
+    let progressIndex = 0;
+
+    const progressTimerId = window.setInterval(() => {
+      setUploadProgressPercent((current) => {
+        if (progressIndex >= progressSteps.length) {
+          return current;
+        }
+
+        const nextValue = progressSteps[progressIndex];
+        progressIndex += 1;
+        return nextValue;
+      });
+    }, 220);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(`${BACKEND_BASE_URL}/jobs/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Upload failed.");
+      }
+
+      const data = await response.json() as {
+        jobId: string;
+        status: "uploaded";
+      };
+
+      window.clearInterval(progressTimerId);
+      setUploadProgressPercent(100);
+      setPreviewAudioJob(data.jobId);
+      setPreviewAudioStatus(data.status);
+      setIsUploadReady(true);
+    } catch (error) {
+      window.clearInterval(progressTimerId);
+      clearPreviewAudioFile();
+      setSelectedFileName("");
+      setHasSelectedAudio(false);
+      setIsUploadReady(false);
+      setUploadProgressPercent(0);
+      setUploadErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Failed to upload audio file.",
+      );
+    } finally {
+      setIsPreparingUpload(false);
+    }
+  };  
 
   const applySelectedFile = (file?: File) => {
     if (!file) {
@@ -74,6 +144,7 @@ export default function Home() {
     });
     setSelectedFileName(file.name);
     setHasSelectedAudio(true);
+    void uploadSelectedFile(file);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -112,58 +183,21 @@ export default function Home() {
     applySelectedFile(file);
   };
 
-  const handleContinueToPreview = async () => {
-    if (!selectedFileName || !hasSelectedAudio || isUploading) {
+  const handleContinueToPreview = () => {
+    if (!selectedFileName || !hasSelectedAudio || isPreparingUpload || !isUploadReady) {
       return;
     }
 
     const previewAudio = getPreviewAudioFile();
 
-    if (!previewAudio.originalFile) {
-      setUploadErrorMessage("No audio file is selected.");
+    if (!previewAudio.jobId) {
+      setUploadErrorMessage("Upload is not ready yet.");
       return;
     }
 
-    setIsUploading(true);
-    setUploadErrorMessage("");
-    setPreviewAudioErrorMessage("");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", previewAudio.originalFile);
-
-      const response = await fetch(`${BACKEND_BASE_URL}/jobs/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Upload failed.");
-      }
-
-      const data = await response.json() as {
-        jobId: string;
-        status: "uploaded";
-      };
-
-      setPreviewAudioJob(data.jobId);
-      setPreviewAudioStatus(data.status);
-
-      router.push(
-        `/processing?step=preview&job=${encodeURIComponent(data.jobId)}`,
-      );
-    } catch (error) {
-      clearPreviewAudioFile();
-      setSelectedFileName("");
-      setHasSelectedAudio(false);
-      setUploadErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "Failed to upload audio file.",
-      );
-    } finally {
-      setIsUploading(false);
-    }
+    router.push(
+      `/processing?step=preview&job=${encodeURIComponent(previewAudio.jobId)}`,
+    );
   };
 
   return (
@@ -218,7 +252,11 @@ export default function Home() {
 
             <p className="mt-4 max-w-lg text-sm leading-6 text-white/42 sm:text-[15px]">
               {selectedFileName
-                ? "Your file is loaded and ready for preview."
+                ? isPreparingUpload
+                  ? "Uploading your audio and preparing the preview session."
+                  : isUploadReady
+                    ? "Your file is uploaded and ready to continue."
+                    : "Your file is loaded."
                 : isDragActive
                   ? "Drop your audio file to load it into Soundfix."
                   : "Upload a separated vocal or stem to generate a short restored preview."}
@@ -229,6 +267,22 @@ export default function Home() {
                 {uploadErrorMessage}
               </div>
             ) : null}
+
+            {selectedFileName && (isPreparingUpload || isUploadReady) ? (
+              <div className="mt-5 w-full max-w-[420px]">
+                <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.18em] text-white/38">
+                  <span>{isUploadReady ? "Upload complete" : "Uploading audio"}</span>
+                  <span>{uploadProgressPercent}%</span>
+                </div>
+
+                <div className="mt-2 h-[6px] w-full overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,rgba(82,224,255,0.95)_0%,rgba(110,103,255,0.95)_55%,rgba(255,68,214,0.95)_100%)] transition-[width] duration-300 ease-out"
+                    style={{ width: `${uploadProgressPercent}%` }}
+                  />
+                </div>
+              </div>
+            ) : null}            
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
@@ -248,10 +302,14 @@ export default function Home() {
                   event.stopPropagation();
                   void handleContinueToPreview();
                 }}
-                disabled={!selectedFileName || !hasSelectedAudio || isUploading}
+                disabled={!selectedFileName || !hasSelectedAudio || isPreparingUpload || !isUploadReady}
                 className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                {isUploading ? "Uploading..." : "Continue to preview"}
+                {isPreparingUpload
+                  ? "Preparing..."
+                  : isUploadReady
+                    ? "Continue to preview"
+                    : "Waiting for upload..."}
               </button>
             </div>
 
