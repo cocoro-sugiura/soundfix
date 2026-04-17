@@ -3,11 +3,23 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  applyMockJobResponse,
   getPreviewAudioFile,
+  setPreviewAudioErrorMessage,
   setPreviewAudioStatus,
+  setPreviewAudioUrls,
 } from "../../lib/preview-audio-store";
-import { SoundfixJobResponse } from "../../lib/soundfix-job";
+import { SoundfixJobStatus } from "../../lib/soundfix-job";
+
+const BACKEND_BASE_URL =
+  process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
+
+type BackendJobStatusResponse = {
+  jobId: string;
+  status: SoundfixJobStatus;
+  previewUrl: string | null;
+  fullUrl: string | null;
+  error: string | null;
+};
 
 export default function ProcessingPageClient() {
   const router = useRouter();
@@ -17,80 +29,99 @@ export default function ProcessingPageClient() {
   const processingStep = searchParams.get("step") ?? "preview";
   const isFullProcessing = processingStep === "full";
 
-  const buildMockJobResponse = (
-    status: SoundfixJobResponse["status"],
-  ): SoundfixJobResponse => {
-    const current = getPreviewAudioFile();
-
-    return {
-      jobId: current.jobId || jobId,
-      status,
-      originalFileName: current.fileName || selectedFileName || "FILENAME.wav",
-      originalFileType: current.fileType || "audio/wav",
-      previewBeforeUrl: current.previewBeforeAudioUrl,
-      previewAfterUrl: current.previewAfterAudioUrl,
-      fullAfterUrl: current.fullAfterAudioUrl,
-      errorMessage: "",
-    };
-  };
-
   useEffect(() => {
-    if (!selectedFileName && !jobId) {
+    if (!jobId) {
       router.replace("/");
       return;
     }
 
-    setPreviewAudioStatus(
-      isFullProcessing ? "full_processing" : "preview_processing",
-    );
+    let isCancelled = false;
 
-    applyMockJobResponse(
-      buildMockJobResponse(
+    const startProcessing = async () => {
+      setPreviewAudioStatus(
         isFullProcessing ? "full_processing" : "preview_processing",
-      ),
-    );
+      );
+      setPreviewAudioErrorMessage("");
 
-    const intervalId = window.setInterval(() => {
-      const current = getPreviewAudioFile();
+      try {
+        const startResponse = await fetch(
+          `${BACKEND_BASE_URL}/jobs/${encodeURIComponent(jobId)}/${isFullProcessing ? "full" : "preview"}`,
+          {
+            method: "POST",
+          },
+        );
 
-      const isPreviewReady = current.status === "preview_ready";
-      const isFullReady = current.status === "full_ready";
-
-      if (!isFullProcessing && isPreviewReady) {
-        window.clearInterval(intervalId);
-
-        if (jobId) {
-          router.replace(`/preview?job=${encodeURIComponent(jobId)}`);
-          return;
+        if (!startResponse.ok) {
+          throw new Error("Failed to start processing.");
         }
 
-        router.replace(`/preview?file=${encodeURIComponent(selectedFileName)}`);
-        return;
+        const pollStatus = async () => {
+          if (isCancelled) {
+            return;
+          }
+
+          const statusResponse = await fetch(
+            `${BACKEND_BASE_URL}/jobs/${encodeURIComponent(jobId)}`,
+            {
+              method: "GET",
+              cache: "no-store",
+            },
+          );
+
+          if (!statusResponse.ok) {
+            throw new Error("Failed to fetch job status.");
+          }
+
+          const job = await statusResponse.json() as BackendJobStatusResponse;
+
+          setPreviewAudioStatus(job.status);
+          setPreviewAudioErrorMessage(job.error || "");
+
+          if (job.previewUrl) {
+            setPreviewAudioUrls({
+              previewAfterAudioUrl: `${BACKEND_BASE_URL}${job.previewUrl}`,
+            });
+          }
+
+          if (job.fullUrl) {
+            setPreviewAudioUrls({
+              fullAfterAudioUrl: `${BACKEND_BASE_URL}${job.fullUrl}`,
+            });
+          }
+
+          if (!isFullProcessing && job.status === "preview_ready") {
+            router.replace(`/preview?job=${encodeURIComponent(jobId)}`);
+            return;
+          }
+
+          if (isFullProcessing && job.status === "full_ready") {
+            router.replace(`/download?job=${encodeURIComponent(jobId)}`);
+            return;
+          }
+
+          if (job.status === "failed") {
+            throw new Error(job.error || "Processing failed.");
+          }
+
+          window.setTimeout(() => {
+            void pollStatus();
+          }, 1500);
+        };
+
+        await pollStatus();
+      } catch (error) {
+        setPreviewAudioStatus("failed");
+        setPreviewAudioErrorMessage(
+          error instanceof Error ? error.message : "Processing failed.",
+        );
+        router.replace("/");
       }
+    };
 
-      if (isFullProcessing && isFullReady) {
-        window.clearInterval(intervalId);
-
-        if (jobId) {
-          router.replace(`/download?job=${encodeURIComponent(jobId)}`);
-          return;
-        }
-
-        router.replace(`/download?file=${encodeURIComponent(selectedFileName)}`);
-      }
-    }, 1500);
-
-    // 仮: 今はまだバックエンドがないので疑似的に完了させる
-    const mockTimeoutId = window.setTimeout(() => {
-      const nextStatus = isFullProcessing ? "full_ready" : "preview_ready";
-
-      setPreviewAudioStatus(nextStatus);
-      applyMockJobResponse(buildMockJobResponse(nextStatus));
-    }, 3000);
+    void startProcessing();
 
     return () => {
-      window.clearInterval(intervalId);
-      window.clearTimeout(mockTimeoutId);
+      isCancelled = true;
     };
   }, [isFullProcessing, jobId, router, selectedFileName]);
 
