@@ -183,9 +183,12 @@ export default function PreviewPageClient() {
     };
 
     const handleLoadedMetadata = () => {
-      setAfterCurrentTime(0);
-      setAfterDuration(audioElement.duration || 0);
-      setAfterPlaybackProgress(0);
+      const safeDuration = audioElement.duration || 0;
+      setAfterDuration(safeDuration);
+      setAfterCurrentTime(audioElement.currentTime || 0);
+      setAfterPlaybackProgress(
+        safeDuration > 0 ? audioElement.currentTime / safeDuration : 0,
+      );
     };
 
     audioElement.addEventListener("ended", handleEnded);
@@ -574,7 +577,9 @@ export default function PreviewPageClient() {
     );
   };
 
-  const handleAfterWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
+  const handleAfterWaveformSeek = async (event: MouseEvent<HTMLCanvasElement>) => {
+    const wasPlaying = !!afterAudioRef.current && !afterAudioRef.current.paused;
+
     handleWaveformSeek(
       event,
       afterWaveformCanvasRef.current,
@@ -582,6 +587,11 @@ export default function PreviewPageClient() {
       setAfterCurrentTime,
       setAfterPlaybackProgress,
     );
+
+    if (wasPlaying && afterAudioRef.current) {
+      await afterAudioRef.current.play();
+      setIsPlayingAfter(true);
+    }
   };
 
   const handleContinueToDownload = () => {

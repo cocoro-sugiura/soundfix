@@ -136,9 +136,12 @@ export default function DownloadPageClient({
     };
 
     const handleLoadedMetadata = () => {
-      setCurrentTime(0);
-      setDuration(audioElement.duration || 0);
-      setPlaybackProgress(0);
+      const safeDuration = audioElement.duration || 0;
+      setDuration(safeDuration);
+      setCurrentTime(audioElement.currentTime || 0);
+      setPlaybackProgress(
+        safeDuration > 0 ? audioElement.currentTime / safeDuration : 0,
+      );
     };
 
     audioElement.addEventListener("ended", handleEnded);
@@ -343,9 +346,10 @@ export default function DownloadPageClient({
     setIsPlaying(false);
   };
 
-  const handleWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
+  const handleWaveformSeek = async (event: MouseEvent<HTMLCanvasElement>) => {
     const audioElement = audioRef.current;
     const canvasElement = waveformCanvasRef.current;
+    const wasPlaying = !!audioElement && !audioElement.paused;
 
     if (
       !audioElement ||
@@ -364,6 +368,11 @@ export default function DownloadPageClient({
     audioElement.currentTime = nextTime;
     setCurrentTime(nextTime);
     setPlaybackProgress(ratio);
+
+    if (wasPlaying) {
+      await audioElement.play();
+      setIsPlaying(true);
+    }
   };
 
   return (
