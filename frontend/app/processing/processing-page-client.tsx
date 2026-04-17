@@ -3,9 +3,11 @@
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  applyMockJobResponse,
   getPreviewAudioFile,
   setPreviewAudioStatus,
 } from "../../lib/preview-audio-store";
+import { SoundfixJobResponse } from "../../lib/soundfix-job";
 
 export default function ProcessingPageClient() {
   const router = useRouter();
@@ -15,6 +17,23 @@ export default function ProcessingPageClient() {
   const processingStep = searchParams.get("step") ?? "preview";
   const isFullProcessing = processingStep === "full";
 
+  const buildMockJobResponse = (
+    status: SoundfixJobResponse["status"],
+  ): SoundfixJobResponse => {
+    const current = getPreviewAudioFile();
+
+    return {
+      jobId: current.jobId || jobId,
+      status,
+      originalFileName: current.fileName || selectedFileName || "FILENAME.wav",
+      originalFileType: current.fileType || "audio/wav",
+      previewBeforeUrl: current.previewBeforeAudioUrl,
+      previewAfterUrl: current.previewAfterAudioUrl,
+      fullAfterUrl: current.fullAfterAudioUrl,
+      errorMessage: "",
+    };
+  };
+
   useEffect(() => {
     if (!selectedFileName && !jobId) {
       router.replace("/");
@@ -23,6 +42,12 @@ export default function ProcessingPageClient() {
 
     setPreviewAudioStatus(
       isFullProcessing ? "full_processing" : "preview_processing",
+    );
+
+    applyMockJobResponse(
+      buildMockJobResponse(
+        isFullProcessing ? "full_processing" : "preview_processing",
+      ),
     );
 
     const intervalId = window.setInterval(() => {
@@ -57,9 +82,10 @@ export default function ProcessingPageClient() {
 
     // 仮: 今はまだバックエンドがないので疑似的に完了させる
     const mockTimeoutId = window.setTimeout(() => {
-      setPreviewAudioStatus(
-        isFullProcessing ? "full_ready" : "preview_ready",
-      );
+      const nextStatus = isFullProcessing ? "full_ready" : "preview_ready";
+
+      setPreviewAudioStatus(nextStatus);
+      applyMockJobResponse(buildMockJobResponse(nextStatus));
     }, 3000);
 
     return () => {
