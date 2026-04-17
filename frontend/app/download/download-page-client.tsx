@@ -335,6 +335,11 @@ export default function DownloadPageClient({
         audioElement.currentTime = 0;
         setCurrentTime(0);
         setPlaybackProgress(0);
+      } else {
+        setCurrentTime(audioElement.currentTime);
+        setPlaybackProgress(
+          audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
+        );
       }
 
       await audioElement.play();
@@ -366,8 +371,10 @@ export default function DownloadPageClient({
     const nextTime = audioElement.duration * ratio;
 
     audioElement.currentTime = nextTime;
-    setCurrentTime(nextTime);
-    setPlaybackProgress(ratio);
+    setCurrentTime(audioElement.currentTime);
+    setPlaybackProgress(
+      audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
+    );
 
     if (wasPlaying) {
       await audioElement.play();
