@@ -103,14 +103,6 @@ export default function DownloadPageClient({
   }, [audioUrl]);  
 
   useEffect(() => {
-    console.log("[download-audio-url]", {
-      audioUrl,
-      storeStatus: previewAudio.status,
-      resolvedJobId,
-    });
-  }, [audioUrl, previewAudio.status, resolvedJobId]);
-
-  useEffect(() => {
     if (!resolvedJobId) {
       router.replace("/");
       return;
@@ -212,64 +204,6 @@ export default function DownloadPageClient({
       audioElement.removeEventListener("pause", handlePause);
       audioElement.removeEventListener("timeupdate", handleTimeUpdate);
       audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
-    };
-  }, [playableAudioUrl]);
-
-  useEffect(() => {
-    const audioElement = audioRef.current;
-
-    if (!audioElement) {
-      return;
-    }
-
-    const logEvent = (eventName: string) => {
-      console.log(`[download-audio:${eventName}]`, {
-        currentTime: audioElement.currentTime,
-        duration: audioElement.duration,
-        paused: audioElement.paused,
-        readyState: audioElement.readyState,
-        networkState: audioElement.networkState,
-        src: audioElement.currentSrc || audioElement.getAttribute("src"),
-        seekableStart:
-          audioElement.seekable.length > 0 ? audioElement.seekable.start(0) : null,
-        seekableEnd:
-          audioElement.seekable.length > 0 ? audioElement.seekable.end(0) : null,
-      });
-    };
-
-    const handleLoadStart = () => logEvent("loadstart");
-    const handleLoadedMetadata = () => logEvent("loadedmetadata");
-    const handleLoadedData = () => logEvent("loadeddata");
-    const handleCanPlay = () => logEvent("canplay");
-    const handleSeeking = () => logEvent("seeking");
-    const handleSeeked = () => logEvent("seeked");
-    const handleTimeUpdate = () => logEvent("timeupdate");
-    const handlePlay = () => logEvent("play");
-    const handlePause = () => logEvent("pause");
-    const handleEnded = () => logEvent("ended");
-
-    audioElement.addEventListener("loadstart", handleLoadStart);
-    audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
-    audioElement.addEventListener("loadeddata", handleLoadedData);
-    audioElement.addEventListener("canplay", handleCanPlay);
-    audioElement.addEventListener("seeking", handleSeeking);
-    audioElement.addEventListener("seeked", handleSeeked);
-    audioElement.addEventListener("timeupdate", handleTimeUpdate);
-    audioElement.addEventListener("play", handlePlay);
-    audioElement.addEventListener("pause", handlePause);
-    audioElement.addEventListener("ended", handleEnded);
-
-    return () => {
-      audioElement.removeEventListener("loadstart", handleLoadStart);
-      audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      audioElement.removeEventListener("loadeddata", handleLoadedData);
-      audioElement.removeEventListener("canplay", handleCanPlay);
-      audioElement.removeEventListener("seeking", handleSeeking);
-      audioElement.removeEventListener("seeked", handleSeeked);
-      audioElement.removeEventListener("timeupdate", handleTimeUpdate);
-      audioElement.removeEventListener("play", handlePlay);
-      audioElement.removeEventListener("pause", handlePause);
-      audioElement.removeEventListener("ended", handleEnded);
     };
   }, [playableAudioUrl]);
 
@@ -487,16 +421,6 @@ export default function DownloadPageClient({
     const nextTime = audioElement.duration * ratio;
     const wasPlaying = !audioElement.paused;
 
-    console.log("[download-waveform-seek:before]", {
-      target: nextTime,
-      actual: audioElement.currentTime,
-      duration: audioElement.duration,
-      paused: audioElement.paused,
-      readyState: audioElement.readyState,
-      networkState: audioElement.networkState,
-      seekableRanges: audioElement.seekable.length,
-    });
-
     if (wasPlaying) {
       audioElement.pause();
     }
@@ -508,16 +432,6 @@ export default function DownloadPageClient({
     }
 
     window.setTimeout(async () => {
-      console.log("[download-waveform-seek:after-100ms]", {
-        target: nextTime,
-        actual: audioElement.currentTime,
-        duration: audioElement.duration,
-        paused: audioElement.paused,
-        readyState: audioElement.readyState,
-        networkState: audioElement.networkState,
-        seekableRanges: audioElement.seekable.length,
-      });
-
       setCurrentTime(audioElement.currentTime);
       setPlaybackProgress(
         audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
@@ -527,8 +441,7 @@ export default function DownloadPageClient({
         try {
           await audioElement.play();
           setIsPlaying(true);
-        } catch (error) {
-          console.log("[download-waveform-seek:resume-failed]", error);
+        } catch {
           setIsPlaying(false);
         }
       }

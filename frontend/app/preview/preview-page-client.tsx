@@ -101,15 +101,7 @@ export default function PreviewPageClient() {
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [afterAudioUrl]);
-
-  useEffect(() => {
-    console.log("[preview-after-url]", {
-      afterAudioUrl,
-      storeStatus: previewAudio.status,
-      jobId,
-    });
-  }, [afterAudioUrl, previewAudio.status, jobId]);  
+  }, [afterAudioUrl]);  
 
   useEffect(() => {
     if (!jobId) {
@@ -496,65 +488,7 @@ export default function PreviewPageClient() {
       context.fill();
       context.restore();
     }
-  }, [afterWaveformPoints, afterPlaybackProgress]);
-
-  useEffect(() => {
-    const audioElement = afterAudioRef.current;
-
-    if (!audioElement) {
-      return;
-    }
-
-    const logEvent = (eventName: string) => {
-      console.log(`[preview-after-audio:${eventName}]`, {
-        currentTime: audioElement.currentTime,
-        duration: audioElement.duration,
-        paused: audioElement.paused,
-        readyState: audioElement.readyState,
-        networkState: audioElement.networkState,
-        src: audioElement.currentSrc || audioElement.getAttribute("src"),
-        seekableStart:
-          audioElement.seekable.length > 0 ? audioElement.seekable.start(0) : null,
-        seekableEnd:
-          audioElement.seekable.length > 0 ? audioElement.seekable.end(0) : null,
-      });
-    };
-
-    const handleLoadStart = () => logEvent("loadstart");
-    const handleLoadedMetadata = () => logEvent("loadedmetadata");
-    const handleLoadedData = () => logEvent("loadeddata");
-    const handleCanPlay = () => logEvent("canplay");
-    const handleSeeking = () => logEvent("seeking");
-    const handleSeeked = () => logEvent("seeked");
-    const handleTimeUpdate = () => logEvent("timeupdate");
-    const handlePlay = () => logEvent("play");
-    const handlePause = () => logEvent("pause");
-    const handleEnded = () => logEvent("ended");
-
-    audioElement.addEventListener("loadstart", handleLoadStart);
-    audioElement.addEventListener("loadedmetadata", handleLoadedMetadata);
-    audioElement.addEventListener("loadeddata", handleLoadedData);
-    audioElement.addEventListener("canplay", handleCanPlay);
-    audioElement.addEventListener("seeking", handleSeeking);
-    audioElement.addEventListener("seeked", handleSeeked);
-    audioElement.addEventListener("timeupdate", handleTimeUpdate);
-    audioElement.addEventListener("play", handlePlay);
-    audioElement.addEventListener("pause", handlePause);
-    audioElement.addEventListener("ended", handleEnded);
-
-    return () => {
-      audioElement.removeEventListener("loadstart", handleLoadStart);
-      audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      audioElement.removeEventListener("loadeddata", handleLoadedData);
-      audioElement.removeEventListener("canplay", handleCanPlay);
-      audioElement.removeEventListener("seeking", handleSeeking);
-      audioElement.removeEventListener("seeked", handleSeeked);
-      audioElement.removeEventListener("timeupdate", handleTimeUpdate);
-      audioElement.removeEventListener("play", handlePlay);
-      audioElement.removeEventListener("pause", handlePause);
-      audioElement.removeEventListener("ended", handleEnded);
-    };
-  }, [afterPlayableAudioUrl]);  
+  }, [afterWaveformPoints, afterPlaybackProgress]);  
 
   useEffect(() => {
     const buildAfterWaveformPoints = async () => {
@@ -726,16 +660,6 @@ export default function PreviewPageClient() {
     const nextTime = audioElement.duration * ratio;
     const wasPlaying = !audioElement.paused;
 
-    console.log("[waveform-seek:before]", {
-      target: nextTime,
-      actual: audioElement.currentTime,
-      duration: audioElement.duration,
-      paused: audioElement.paused,
-      readyState: audioElement.readyState,
-      networkState: audioElement.networkState,
-      seekableRanges: audioElement.seekable.length,
-    });
-
     if (wasPlaying) {
       audioElement.pause();
     }
@@ -747,16 +671,6 @@ export default function PreviewPageClient() {
     }
 
     window.setTimeout(async () => {
-      console.log("[waveform-seek:after-100ms]", {
-        target: nextTime,
-        actual: audioElement.currentTime,
-        duration: audioElement.duration,
-        paused: audioElement.paused,
-        readyState: audioElement.readyState,
-        networkState: audioElement.networkState,
-        seekableRanges: audioElement.seekable.length,
-      });
-
       setCurrentTime(audioElement.currentTime);
       setPlaybackProgress(
         audioElement.duration > 0 ? audioElement.currentTime / audioElement.duration : 0,
@@ -766,8 +680,7 @@ export default function PreviewPageClient() {
         try {
           await audioElement.play();
           setIsPlaying(true);
-        } catch (error) {
-          console.log("[waveform-seek:resume-failed]", error);
+        } catch {
           setIsPlaying(false);
         }
       }
