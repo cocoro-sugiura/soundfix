@@ -17,10 +17,10 @@ export default function PreviewPageClient() {
   const afterWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
   const fileName = previewAudio.fileName || "FILENAME.wav";
-  const audioUrl = previewAudio.audioUrl || "";
-  const afterAudioUrl = audioUrl;
-  const previewFile = previewAudio.file;
-  const isReady = true;
+  const beforeAudioUrl = previewAudio.previewBeforeAudioUrl || "";
+  const afterAudioUrl = previewAudio.previewAfterAudioUrl || "";
+  const previewFile = previewAudio.originalFile;
+  const isReady = previewAudio.status === "preview_ready" || previewAudio.status === "full_ready";
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
   const [isPlayingAfter, setIsPlayingAfter] = useState(false);
   const [beforeWaveformPoints, setBeforeWaveformPoints] = useState<number[]>([]);
@@ -77,7 +77,7 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("timeupdate", handleTimeUpdate);
       audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, [audioUrl]);
+  }, [beforeAudioUrl]);
 
   useEffect(() => {
     const audioElement = afterAudioRef.current;
@@ -401,7 +401,7 @@ export default function PreviewPageClient() {
     const audioElement = beforeAudioRef.current;
     const afterAudioElement = afterAudioRef.current;
 
-    if (!audioElement || !audioUrl) {
+    if (!audioElement || !beforeAudioUrl) {
       return;
     }
 
@@ -546,7 +546,7 @@ export default function PreviewPageClient() {
 
               {!isReady ? (
                 <p className="mt-4 text-sm text-white/45">Loading preview...</p>
-              ) : !audioUrl ? (
+              ) : !beforeAudioUrl ? (
                 <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-4 text-sm text-white/58">
                   No preview audio was found. Please go back and select a file again.
                 </div>
@@ -568,14 +568,14 @@ export default function PreviewPageClient() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-4">
-                    {audioUrl ? (
-                      <audio ref={beforeAudioRef} src={audioUrl} preload="metadata" />
+                    {beforeAudioUrl ? (
+                      <audio ref={beforeAudioRef} src={beforeAudioUrl} preload="metadata" />
                     ) : null}
 
                     <button
                       type="button"
                       onClick={handleToggleBeforePlayback}
-                      disabled={!audioUrl}
+                      disabled={!beforeAudioUrl}
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <i className={beforeButtonIconClassName} aria-hidden="true" />
