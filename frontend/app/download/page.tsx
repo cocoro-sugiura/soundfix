@@ -12,6 +12,7 @@ export default async function DownloadPage({
 }: DownloadPageProps) {
   const params = await searchParams;
   const fileName = params?.file || "FILENAME.wav";
+  const jobId = params?.job || "";
 
-  return <DownloadPageClient fileName={fileName} />;
+  return <DownloadPageClient fileName={fileName} jobId={jobId} />;
 }

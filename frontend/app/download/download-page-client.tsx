@@ -10,10 +10,12 @@ const DOWNLOAD_WAVEFORM_SAMPLE_COUNT = 720;
 
 type DownloadPageClientProps = {
   fileName: string;
+  jobId: string;
 };
 
 export default function DownloadPageClient({
   fileName,
+  jobId,
 }: DownloadPageClientProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -321,7 +323,7 @@ export default function DownloadPageClient({
               </div>
 
               <p className="mt-4 break-all text-xl font-semibold tracking-tight text-white sm:text-[26px]">
-                {fileName}
+                {fileName || jobId || "FILENAME.wav"}
               </p>
             </div>
 
