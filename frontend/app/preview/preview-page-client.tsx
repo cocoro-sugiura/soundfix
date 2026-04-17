@@ -623,26 +623,13 @@ export default function PreviewPageClient() {
   };
 
   const handleAfterWaveformSeek = (event: MouseEvent<HTMLCanvasElement>) => {
-    const audioElement = afterAudioRef.current;
-    const canvasElement = afterWaveformCanvasRef.current;
-
-    if (
-      !audioElement ||
-      !canvasElement ||
-      !audioElement.duration ||
-      Number.isNaN(audioElement.duration)
-    ) {
-      return;
-    }
-
-    const rect = canvasElement.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-    const nextTime = audioElement.duration * ratio;
-
-    audioElement.currentTime = nextTime;
-    setAfterCurrentTime(nextTime);
-    setAfterPlaybackProgress(ratio);
+    handleWaveformSeek(
+      event,
+      afterWaveformCanvasRef.current,
+      afterAudioRef.current,
+      setAfterCurrentTime,
+      setAfterPlaybackProgress,
+    );
   };
 
   const handleContinueToDownload = () => {
