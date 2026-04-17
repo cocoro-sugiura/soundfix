@@ -18,8 +18,8 @@ export default function DownloadPageClient({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const waveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
-  const audioUrl = previewAudio.audioUrl || "";
-  const previewFile = previewAudio.file;
+  const audioUrl = previewAudio.fullAfterAudioUrl || "";
+  const previewFile = previewAudio.originalFile;
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveformPoints, setWaveformPoints] = useState<number[]>([]);
   const [playbackProgress, setPlaybackProgress] = useState(0);
