@@ -43,7 +43,10 @@ async def upload_job(file: UploadFile = File(...)) -> dict[str, str]:
 
 @router.post("/{job_id}/preview")
 def start_preview(job_id: str) -> dict[str, str]:
-    record = get_job(job_id)
+    try:
+        record = get_job(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Job not found") from exc
 
     if record.status not in {JobStatus.UPLOADED, JobStatus.PREVIEW_READY}:
         raise HTTPException(status_code=400, detail="Preview cannot be started from current status")
@@ -66,7 +69,10 @@ def start_preview(job_id: str) -> dict[str, str]:
 
 @router.post("/{job_id}/full")
 def start_full(job_id: str) -> dict[str, str]:
-    record = get_job(job_id)
+    try:
+        record = get_job(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Job not found") from exc
 
     if record.status not in {JobStatus.PREVIEW_READY, JobStatus.FULL_READY}:
         raise HTTPException(status_code=400, detail="Full processing cannot be started from current status")
