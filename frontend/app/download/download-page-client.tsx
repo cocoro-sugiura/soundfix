@@ -41,6 +41,9 @@ export default function DownloadPageClient({
   const resolvedJobId = searchParams.get("job") || jobId || previewAudio.jobId || "";
   const audioUrl = previewAudio.fullAfterAudioUrl || "";
   const previewFile = previewAudio.originalFile;
+  const displayFileName =
+    previewAudio.fileName || fileName || previewFile?.name || "FILENAME.wav";  
+  const downloadFileName = displayFileName.replace(/\.[^/.]+$/, "") + "_fixed.mp3";    
   const [isPlaying, setIsPlaying] = useState(false);
   const [waveformPoints, setWaveformPoints] = useState<number[]>([]);
   const [playbackProgress, setPlaybackProgress] = useState(0);
@@ -400,7 +403,7 @@ export default function DownloadPageClient({
               </div>
 
               <p className="mt-4 break-all text-xl font-semibold tracking-tight text-white sm:text-[26px]">
-                {fileName || resolvedJobId || "FILENAME.wav"}
+                {displayFileName}
               </p>
             </div>
 
@@ -444,7 +447,7 @@ export default function DownloadPageClient({
             <div className="mt-8 flex flex-col items-center gap-4">
               <a
                 href={audioUrl}
-                download
+                download={downloadFileName}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:opacity-90"
               >
                 <i className="fa-solid fa-arrow-down-to-bracket" aria-hidden="true" />
