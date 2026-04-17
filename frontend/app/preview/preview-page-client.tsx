@@ -16,6 +16,7 @@ export default function PreviewPageClient() {
   const beforeWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const afterWaveformCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewAudio = getPreviewAudioFile();
+  const jobId = previewAudio.jobId || "";
   const fileName = previewAudio.fileName || "FILENAME.wav";
   const beforeAudioUrl = previewAudio.previewBeforeAudioUrl || "";
   const afterAudioUrl = previewAudio.previewAfterAudioUrl || "";
@@ -510,6 +511,13 @@ export default function PreviewPageClient() {
   };
 
   const handleContinueToDownload = () => {
+    if (jobId) {
+      router.push(
+        `/processing?step=full&job=${encodeURIComponent(jobId)}`,
+      );
+      return;
+    }
+
     router.push(
       `/processing?step=full&file=${encodeURIComponent(fileName)}`,
     );
