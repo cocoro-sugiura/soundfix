@@ -59,6 +59,48 @@ export default function DownloadPageClient({
   const [playbackProgress, setPlaybackProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [playableAudioUrl, setPlayableAudioUrl] = useState("");
+
+  useEffect(() => {
+    let objectUrl = "";
+    let isCancelled = false;
+
+    const buildPlayableAudioUrl = async () => {
+      if (!audioUrl) {
+        setPlayableAudioUrl("");
+        return;
+      }
+
+      try {
+        const response = await fetch(audioUrl);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch download audio.");
+        }
+
+        const blob = await response.blob();
+        objectUrl = URL.createObjectURL(blob);
+
+        if (!isCancelled) {
+          setPlayableAudioUrl(objectUrl);
+        }
+      } catch {
+        if (!isCancelled) {
+          setPlayableAudioUrl(audioUrl);
+        }
+      }
+    };
+
+    void buildPlayableAudioUrl();
+
+    return () => {
+      isCancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [audioUrl]);  
 
   useEffect(() => {
     console.log("[download-audio-url]", {
@@ -171,40 +213,7 @@ export default function DownloadPageClient({
       audioElement.removeEventListener("timeupdate", handleTimeUpdate);
       audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, [audioUrl]);
-
-  useEffect(() => {
-    const audioElement = audioRef.current;
-
-    if (!audioElement) {
-      return;
-    }
-
-    if (!audioUrl) {
-      audioElement.removeAttribute("src");
-      audioElement.load();
-      setIsPlaying(false);
-      setCurrentTime(0);
-      setDuration(0);
-      setPlaybackProgress(0);
-      return;
-    }
-
-    if (audioElement.getAttribute("src") !== audioUrl) {
-      console.log("[download-src-set]", {
-        prevSrc: audioElement.getAttribute("src"),
-        nextSrc: audioUrl,
-      });
-
-      audioElement.setAttribute("src", audioUrl);
-      audioElement.load();
-
-      setIsPlaying(false);
-      setCurrentTime(0);
-      setDuration(0);
-      setPlaybackProgress(0);
-    }
-  }, [audioUrl]);  
+  }, [playableAudioUrl]);
 
   useEffect(() => {
     const audioElement = audioRef.current;
@@ -262,7 +271,7 @@ export default function DownloadPageClient({
       audioElement.removeEventListener("pause", handlePause);
       audioElement.removeEventListener("ended", handleEnded);
     };
-  }, [audioUrl]);  
+  }, [playableAudioUrl]);
 
   useEffect(() => {
     const buildWaveformPoints = async () => {
@@ -430,7 +439,7 @@ export default function DownloadPageClient({
   const handleTogglePlayback = async () => {
     const audioElement = audioRef.current;
 
-    if (!audioElement || !audioUrl) {
+    if (!audioElement || !playableAudioUrl) {
       return;
     }
 
@@ -578,12 +587,18 @@ export default function DownloadPageClient({
               </div>
 
               <div className="mt-4 flex items-center gap-4">
-                <audio ref={audioRef} preload="metadata" />
+                {playableAudioUrl ? (
+                  <audio
+                    ref={audioRef}
+                    src={playableAudioUrl}
+                    preload="metadata"
+                  />
+                ) : null}
 
                 <button
                   type="button"
                   onClick={handleTogglePlayback}
-                  disabled={!audioUrl}
+                  disabled={!playableAudioUrl}
                   className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <i className={buttonIconClassName} aria-hidden="true" />
