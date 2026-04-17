@@ -126,10 +126,13 @@ def get_preview_file_path(job_id: str) -> FileResponse:
 
     media_type, _ = guess_type(str(preview_path))
 
+    original_name = Path(record.original_filename)
+    preview_download_name = f"{original_name.stem}_preview{original_name.suffix}"    
+
     return FileResponse(
         path=str(preview_path),
         media_type=media_type or "application/octet-stream",
-        filename=preview_path.name,
+        filename=preview_download_name,
     )
 
 
@@ -150,8 +153,11 @@ def get_full_file_path(job_id: str) -> FileResponse:
 
     media_type, _ = guess_type(str(full_path))
 
+    original_name = Path(record.original_filename)
+    full_download_name = f"{original_name.stem}_fixed{original_name.suffix}"    
+
     return FileResponse(
         path=str(full_path),
         media_type=media_type or "application/octet-stream",
-        filename=full_path.name,
+        filename=full_download_name,
     )
