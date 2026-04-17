@@ -11,9 +11,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"https://.*-3000\.app\.github\.dev",
     allow_origins=[
         "http://localhost:3000",
-        "https://glorious-space-fortnight-v6w4rx76g759cxxjx-3000.app.github.dev",
     ],
     allow_credentials=True,
     allow_methods=["*"],
