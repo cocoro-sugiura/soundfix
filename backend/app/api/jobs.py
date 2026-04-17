@@ -127,7 +127,7 @@ def get_preview_file_path(job_id: str) -> FileResponse:
     media_type, _ = guess_type(str(preview_path))
 
     original_name = Path(record.original_filename)
-    preview_download_name = f"{original_name.stem}_preview{original_name.suffix}"    
+    preview_download_name = f"{original_name.stem}_soundfix_preview{original_name.suffix}"    
 
     return FileResponse(
         path=str(preview_path),
@@ -154,7 +154,7 @@ def get_full_file_path(job_id: str) -> FileResponse:
     media_type, _ = guess_type(str(full_path))
 
     original_name = Path(record.original_filename)
-    full_download_name = f"{original_name.stem}_fixed{original_name.suffix}"    
+    full_download_name = f"{original_name.stem}_soundfix{original_name.suffix}"    
 
     return FileResponse(
         path=str(full_path),
