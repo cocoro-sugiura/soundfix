@@ -101,7 +101,7 @@ export default function PreviewPageClient() {
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [afterPlayableAudioUrl]);  
+  }, [afterAudioUrl]);
 
   useEffect(() => {
     console.log("[preview-after-url]", {
@@ -608,7 +608,7 @@ export default function PreviewPageClient() {
     };
 
     void buildAfterWaveformPoints();
-  }, [afterPlayableAudioUrl]);
+  }, [afterAudioUrl]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
@@ -669,7 +669,7 @@ export default function PreviewPageClient() {
     const audioElement = afterAudioRef.current;
     const beforeAudioElement = beforeAudioRef.current;
 
-    if (!audioElement || !afterAudioUrl) {
+    if (!audioElement || !afterPlayableAudioUrl) {
       return;
     }
 
@@ -901,7 +901,7 @@ export default function PreviewPageClient() {
                     <button
                       type="button"
                       onClick={handleToggleAfterPlayback}
-                      disabled={!afterAudioUrl}
+                      disabled={!afterPlayableAudioUrl}
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <i className={afterButtonIconClassName} aria-hidden="true" />
