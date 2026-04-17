@@ -49,6 +49,7 @@ export default function PreviewPageClient() {
   const beforeAudioUrl = previewAudio.previewBeforeAudioUrl || "";
   const afterAudioUrl = previewAudio.previewAfterAudioUrl || "";
   const previewFile = previewAudio.originalFile;
+  const storedAfterWaveformPoints = previewAudio.previewAfterWaveformPoints;
   const isReady = previewAudio.status === "preview_ready" || previewAudio.status === "full_ready";
   const [isPlayingBefore, setIsPlayingBefore] = useState(false);
   const [isPlayingAfter, setIsPlayingAfter] = useState(false);
@@ -491,6 +492,11 @@ export default function PreviewPageClient() {
   }, [afterWaveformPoints, afterPlaybackProgress]);  
 
   useEffect(() => {
+    if (storedAfterWaveformPoints.length) {
+      setAfterWaveformPoints(storedAfterWaveformPoints);
+      return;
+    }
+
     const buildAfterWaveformPoints = async () => {
       if (!afterAudioUrl) {
         setAfterWaveformPoints([]);
@@ -542,7 +548,7 @@ export default function PreviewPageClient() {
     };
 
     void buildAfterWaveformPoints();
-  }, [afterAudioUrl]);
+  }, [afterAudioUrl, storedAfterWaveformPoints]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";

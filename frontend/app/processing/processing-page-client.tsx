@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   getPreviewAudioFile,
+  setPreviewAfterWaveformPoints,
   setPreviewAudioErrorMessage,
   setPreviewAudioStatus,
   setPreviewAudioUrls,
@@ -12,6 +13,64 @@ import { SoundfixJobStatus } from "../../lib/soundfix-job";
 
 const BACKEND_BASE_URL =
   process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
+
+const PREVIEW_WAVEFORM_SAMPLE_COUNT = 720;
+
+const resolveBackendAudioUrl = (url: string | null) => {
+  if (!url) {
+    return "";
+  }
+
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  return new URL(url, BACKEND_BASE_URL).toString();
+};
+
+const buildWaveformPointsFromAudioUrl = async (audioUrl: string) => {
+  const audioContext = new window.AudioContext();
+
+  try {
+    const response = await fetch(audioUrl);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch preview audio.");
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    const channelData = audioBuffer.getChannelData(0);
+    const blockSize = Math.max(
+      1,
+      Math.floor(channelData.length / PREVIEW_WAVEFORM_SAMPLE_COUNT),
+    );
+
+    const points = Array.from(
+      { length: PREVIEW_WAVEFORM_SAMPLE_COUNT },
+      (_, index) => {
+        const start = index * blockSize;
+        const end = Math.min(start + blockSize, channelData.length);
+
+        let peak = 0;
+
+        for (let i = start; i < end; i += 1) {
+          const amplitude = Math.abs(channelData[i]);
+
+          if (amplitude > peak) {
+            peak = amplitude;
+          }
+        }
+
+        return peak;
+      },
+    );
+
+    return points.map((point) => Math.max(0.02, Math.min(1, point)));
+  } finally {
+    await audioContext.close();
+  }
+};  
 
 type BackendJobStatusResponse = {
   jobId: string;
@@ -81,9 +140,22 @@ export default function ProcessingPageClient() {
           setPreviewAudioErrorMessage(job.error || "");
 
           if (job.previewUrl) {
+            const resolvedPreviewUrl = resolveBackendAudioUrl(job.previewUrl);
+
             setPreviewAudioUrls({
-              previewAfterAudioUrl: `${BACKEND_BASE_URL}${job.previewUrl}`,
+              previewAfterAudioUrl: resolvedPreviewUrl,
             });
+
+            if (!isFullProcessing && job.status === "preview_ready") {
+              const waveformPoints =
+                await buildWaveformPointsFromAudioUrl(resolvedPreviewUrl);
+
+              if (isCancelled) {
+                return;
+              }
+
+              setPreviewAfterWaveformPoints(waveformPoints);
+            }
           }
 
           if (job.fullUrl) {

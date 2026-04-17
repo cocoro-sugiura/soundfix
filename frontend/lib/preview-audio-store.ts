@@ -12,6 +12,7 @@ type PreviewAudioState = {
   previewBeforeAudioUrl: string;
   previewAfterAudioUrl: string;
   fullAfterAudioUrl: string;
+  previewAfterWaveformPoints: number[];
   fileType: string;
   errorMessage: string;
 };
@@ -25,6 +26,7 @@ const previewAudioState: PreviewAudioState = {
   previewBeforeAudioUrl: "",
   previewAfterAudioUrl: "",
   fullAfterAudioUrl: "",
+  previewAfterWaveformPoints: [],
   fileType: "",
   errorMessage: "",
 };
@@ -53,8 +55,13 @@ export function setPreviewAudioFile(file: File) {
   previewAudioState.previewBeforeAudioUrl = objectUrl;
   previewAudioState.previewAfterAudioUrl = "";
   previewAudioState.fullAfterAudioUrl = "";
+  previewAudioState.previewAfterWaveformPoints = [];
   previewAudioState.fileType = file.type;
   previewAudioState.errorMessage = "";
+}
+
+export function setPreviewAfterWaveformPoints(points: number[]) {
+  previewAudioState.previewAfterWaveformPoints = points;
 }
 
 export function setPreviewAudioJob(jobId: string) {
@@ -157,6 +164,7 @@ export function clearPreviewAudioFile() {
   previewAudioState.previewBeforeAudioUrl = "";
   previewAudioState.previewAfterAudioUrl = "";
   previewAudioState.fullAfterAudioUrl = "";
+  previewAudioState.previewAfterWaveformPoints = [];
   previewAudioState.fileType = "";
   previewAudioState.errorMessage = "";
 }
