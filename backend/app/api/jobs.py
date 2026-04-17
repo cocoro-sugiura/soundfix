@@ -95,7 +95,10 @@ def start_full(job_id: str) -> dict[str, str]:
 
 @router.get("/{job_id}")
 def get_job_status(job_id: str) -> dict[str, str | None]:
-    record = get_job(job_id)
+    try:
+        record = get_job(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Job not found") from exc
 
     return {
         "jobId": record.job_id,
@@ -108,7 +111,10 @@ def get_job_status(job_id: str) -> dict[str, str | None]:
 
 @router.get("/{job_id}/preview/file")
 def get_preview_file_path(job_id: str) -> FileResponse:
-    record = get_job(job_id)
+    try:
+        record = get_job(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Job not found") from exc
 
     if not record.preview_path:
         raise HTTPException(status_code=404, detail="Preview file not found")
@@ -129,7 +135,10 @@ def get_preview_file_path(job_id: str) -> FileResponse:
 
 @router.get("/{job_id}/full/file")
 def get_full_file_path(job_id: str) -> FileResponse:
-    record = get_job(job_id)
+    try:
+        record = get_job(job_id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Job not found") from exc
 
     if not record.full_path:
         raise HTTPException(status_code=404, detail="Full file not found")
