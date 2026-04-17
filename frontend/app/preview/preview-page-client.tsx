@@ -16,6 +16,18 @@ const PREVIEW_WAVEFORM_SAMPLE_COUNT = 720;
 const BACKEND_BASE_URL =
   process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
 
+const resolveBackendAudioUrl = (url: string | null) => {
+  if (!url) {
+    return "";
+  }
+
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  return new URL(url, BACKEND_BASE_URL).toString();
+};
+
 type BackendJobStatusResponse = {
   jobId: string;
   status: "idle" | "uploaded" | "preview_processing" | "preview_ready" | "full_processing" | "full_ready" | "failed";
@@ -82,13 +94,13 @@ export default function PreviewPageClient() {
 
         if (job.previewUrl) {
           setPreviewAudioUrls({
-            previewAfterAudioUrl: `${BACKEND_BASE_URL}${job.previewUrl}`,
+            previewAfterAudioUrl: resolveBackendAudioUrl(job.previewUrl),
           });
         }
 
         if (job.fullUrl) {
           setPreviewAudioUrls({
-            fullAfterAudioUrl: `${BACKEND_BASE_URL}${job.fullUrl}`,
+            fullAfterAudioUrl: resolveBackendAudioUrl(job.fullUrl),
           });
         }
 
@@ -453,8 +465,8 @@ export default function PreviewPageClient() {
       return;
     }
 
-    if (audioElement.src !== afterAudioUrl) {
-      audioElement.src = afterAudioUrl;
+    if (audioElement.getAttribute("src") !== afterAudioUrl) {
+      audioElement.setAttribute("src", afterAudioUrl);
       audioElement.load();
       setIsPlayingAfter(false);
       setAfterCurrentTime(0);
