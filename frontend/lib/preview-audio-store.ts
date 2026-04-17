@@ -1,12 +1,11 @@
+import {
+  SoundfixJobResponse,
+  SoundfixJobStatus,
+} from "./soundfix-job";
+
 type PreviewAudioState = {
   jobId: string;
-  status:
-    | "idle"
-    | "uploaded"
-    | "preview_processing"
-    | "preview_ready"
-    | "full_processing"
-    | "full_ready";
+  status: SoundfixJobStatus;
   fileName: string;
   originalFile: File | null;
   originalAudioUrl: string;
@@ -14,6 +13,7 @@ type PreviewAudioState = {
   previewAfterAudioUrl: string;
   fullAfterAudioUrl: string;
   fileType: string;
+  errorMessage: string;
 };
 
 const previewAudioState: PreviewAudioState = {
@@ -26,6 +26,7 @@ const previewAudioState: PreviewAudioState = {
   previewAfterAudioUrl: "",
   fullAfterAudioUrl: "",
   fileType: "",
+  errorMessage: "",
 };
 
 function revokeAudioUrl(audioUrl: string) {
@@ -59,10 +60,22 @@ export function setPreviewAudioJob(jobId: string) {
   previewAudioState.jobId = jobId;
 }
 
-export function setPreviewAudioStatus(
-  status: PreviewAudioState["status"],
-) {
+export function setPreviewAudioStatus(status: SoundfixJobStatus) {
   previewAudioState.status = status;
+}
+
+export function applyMockJobResponse(job: SoundfixJobResponse) {
+  previewAudioState.jobId = job.jobId;
+  previewAudioState.status = job.status;
+  previewAudioState.fileName = job.originalFileName;
+  previewAudioState.fileType = job.originalFileType;
+  previewAudioState.previewBeforeAudioUrl =
+    job.previewBeforeUrl || previewAudioState.previewBeforeAudioUrl;
+  previewAudioState.previewAfterAudioUrl =
+    job.previewAfterUrl || previewAudioState.previewAfterAudioUrl;
+  previewAudioState.fullAfterAudioUrl =
+    job.fullAfterUrl || previewAudioState.fullAfterAudioUrl;
+  previewAudioState.errorMessage = job.errorMessage;
 }
 
 export function getPreviewAudioFile() {
@@ -102,4 +115,5 @@ export function clearPreviewAudioFile() {
   previewAudioState.previewAfterAudioUrl = "";
   previewAudioState.fullAfterAudioUrl = "";
   previewAudioState.fileType = "";
+  previewAudioState.errorMessage = "";
 }
