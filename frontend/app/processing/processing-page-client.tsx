@@ -13,6 +13,30 @@ import { SoundfixJobStatus } from "../../lib/soundfix-job";
 const BACKEND_BASE_URL =
   process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
 
+const resolveBackendAudioUrl = (url: string | null) => {
+  if (!url) {
+    return "";
+  }
+
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+
+  return new URL(url, BACKEND_BASE_URL).toString();
+};
+
+const preloadAudioUrl = async (url: string) => {
+  const response = await fetch(url, {
+    cache: "force-cache",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to preload audio.");
+  }
+
+  await response.blob();
+};
+
 type BackendJobStatusResponse = {
   jobId: string;
   status: SoundfixJobStatus;
@@ -82,13 +106,13 @@ export default function ProcessingPageClient() {
 
           if (job.previewUrl) {
             setPreviewAudioUrls({
-              previewAfterAudioUrl: `${BACKEND_BASE_URL}${job.previewUrl}`,
+              previewAfterAudioUrl: resolveBackendAudioUrl(job.previewUrl),
             });
           }
 
           if (job.fullUrl) {
             setPreviewAudioUrls({
-              fullAfterAudioUrl: `${BACKEND_BASE_URL}${job.fullUrl}`,
+              fullAfterAudioUrl: resolveBackendAudioUrl(job.fullUrl),
             });
           }
 
@@ -98,6 +122,10 @@ export default function ProcessingPageClient() {
           }
 
           if (isFullProcessing && job.status === "full_ready") {
+            if (job.fullUrl) {
+              await preloadAudioUrl(resolveBackendAudioUrl(job.fullUrl));
+            }
+
             router.replace(`/download?job=${encodeURIComponent(jobId)}`);
             return;
           }
