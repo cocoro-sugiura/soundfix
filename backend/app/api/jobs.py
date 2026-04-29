@@ -48,13 +48,13 @@ def start_preview(job_id: str) -> dict[str, str]:
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Job not found") from exc
 
-    if record.status == JobStatus.PREVIEW_PROCESSING:
+    if record.status in {JobStatus.PREVIEW_PROCESSING, JobStatus.PREVIEW_READY}:
         return {
             "jobId": record.job_id,
             "status": record.status.value,
         }
 
-    if record.status not in {JobStatus.UPLOADED, JobStatus.PREVIEW_READY}:
+    if record.status not in {JobStatus.UPLOADED}:
         raise HTTPException(status_code=400, detail="Preview cannot be started from current status")
 
     update_job_status(job_id, JobStatus.PREVIEW_PROCESSING)
@@ -84,13 +84,13 @@ def start_full(job_id: str) -> dict[str, str]:
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail="Job not found") from exc
 
-    if record.status == JobStatus.FULL_PROCESSING:
+    if record.status in {JobStatus.FULL_PROCESSING, JobStatus.FULL_READY}:
         return {
             "jobId": record.job_id,
             "status": record.status.value,
         }
 
-    if record.status not in {JobStatus.PREVIEW_READY, JobStatus.FULL_READY}:
+    if record.status not in {JobStatus.PREVIEW_READY}:
         raise HTTPException(status_code=400, detail="Full processing cannot be started from current status")
 
     update_job_status(job_id, JobStatus.FULL_PROCESSING)
@@ -182,4 +182,4 @@ def get_full_file_path(job_id: str) -> FileResponse:
         path=str(full_path),
         media_type=media_type or "application/octet-stream",
         filename=full_download_name,
-    )
+    )  
