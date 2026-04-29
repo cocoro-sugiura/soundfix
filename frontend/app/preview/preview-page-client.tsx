@@ -34,6 +34,8 @@ type BackendJobStatusResponse = {
   status: "idle" | "uploaded" | "preview_processing" | "preview_ready" | "full_processing" | "full_ready" | "failed";
   previewUrl: string | null;
   fullUrl: string | null;
+  previewWaveform: number[] | null;
+  fullWaveform: number[] | null;
   error: string | null;
 };
 
@@ -196,6 +198,10 @@ export default function PreviewPageClient() {
           setPreviewAudioUrls({
             previewAfterAudioUrl: resolveBackendAudioUrl(job.previewUrl),
           });
+        }
+
+        if (job.previewWaveform) {
+          setAfterWaveformPoints(job.previewWaveform);
         }
 
         if (job.fullUrl) {
@@ -551,60 +557,6 @@ export default function PreviewPageClient() {
       context.restore();
     }
   }, [afterWaveformPoints, afterPlaybackProgress]);  
-
-  useEffect(() => {
-    const buildAfterWaveformPoints = async () => {
-      if (!afterAudioUrl) {
-        setAfterWaveformPoints([]);
-        return;
-      }
-
-      const audioContext = new window.AudioContext();
-
-      try {
-        const response = await fetch(afterAudioUrl);
-        const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        const channelData = audioBuffer.getChannelData(0);
-        const blockSize = Math.max(
-          1,
-          Math.floor(channelData.length / PREVIEW_WAVEFORM_SAMPLE_COUNT),
-        );
-
-        const points = Array.from(
-          { length: PREVIEW_WAVEFORM_SAMPLE_COUNT },
-          (_, index) => {
-            const start = index * blockSize;
-            const end = Math.min(start + blockSize, channelData.length);
-
-            let peak = 0;
-
-            for (let i = start; i < end; i += 1) {
-              const amplitude = Math.abs(channelData[i]);
-
-              if (amplitude > peak) {
-                peak = amplitude;
-              }
-            }
-
-            return peak;
-          },
-        );
-
-        const normalizedPoints = points.map((point) =>
-          Math.max(0.02, Math.min(1, point)),
-        );
-
-        setAfterWaveformPoints(normalizedPoints);
-      } catch {
-        setAfterWaveformPoints([]);
-      } finally {
-        await audioContext.close();
-      }
-    };
-
-    void buildAfterWaveformPoints();
-  }, [afterAudioUrl]);
 
   const beforeButtonIconClassName = useMemo(() => {
     return isPlayingBefore ? "fa-solid fa-pause" : "fa-solid fa-play";
