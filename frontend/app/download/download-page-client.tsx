@@ -33,6 +33,8 @@ type BackendJobStatusResponse = {
   status: "idle" | "uploaded" | "preview_processing" | "preview_ready" | "full_processing" | "full_ready" | "failed";
   previewUrl: string | null;
   fullUrl: string | null;
+  previewWaveform: number[] | null;
+  fullWaveform: number[] | null;
   error: string | null;
 };
 
@@ -59,7 +61,6 @@ export default function DownloadPageClient({
   const [playbackProgress, setPlaybackProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [playableAudioUrl, setPlayableAudioUrl] = useState("");
 
   useEffect(() => {
@@ -68,7 +69,6 @@ export default function DownloadPageClient({
 
     const buildPlayableAudioUrl = async () => {
       if (!audioUrl) {
-        setAudioBlob(null);
         setPlayableAudioUrl("");
         return;
       }
@@ -84,12 +84,10 @@ export default function DownloadPageClient({
         objectUrl = URL.createObjectURL(blob);
 
         if (!isCancelled) {
-          setAudioBlob(blob);
           setPlayableAudioUrl(objectUrl);
         }
       } catch {
         if (!isCancelled) {
-          setAudioBlob(null);
           setPlayableAudioUrl(audioUrl);
         }
       }
@@ -147,6 +145,10 @@ export default function DownloadPageClient({
           setPreviewAudioUrls({
             fullAfterAudioUrl: resolveBackendAudioUrl(job.fullUrl),
           });
+        }
+
+        if (job.fullWaveform) {
+          setWaveformPoints(job.fullWaveform);
         }
 
         if (job.status === "failed") {
@@ -210,59 +212,6 @@ export default function DownloadPageClient({
       audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, [playableAudioUrl]);
-
-  useEffect(() => {
-    const buildWaveformPoints = async () => {
-      if (!audioBlob) {
-        setWaveformPoints([]);
-        return;
-      }
-
-      const audioContext = new window.AudioContext();
-
-      try {
-        const arrayBuffer = await audioBlob.arrayBuffer();
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        const channelData = audioBuffer.getChannelData(0);
-        const blockSize = Math.max(
-          1,
-          Math.floor(channelData.length / DOWNLOAD_WAVEFORM_SAMPLE_COUNT),
-        );
-
-        const points = Array.from(
-          { length: DOWNLOAD_WAVEFORM_SAMPLE_COUNT },
-          (_, index) => {
-            const start = index * blockSize;
-            const end = Math.min(start + blockSize, channelData.length);
-
-            let peak = 0;
-
-            for (let i = start; i < end; i += 1) {
-              const amplitude = Math.abs(channelData[i]);
-
-              if (amplitude > peak) {
-                peak = amplitude;
-              }
-            }
-
-            return peak;
-          },
-        );
-
-        const normalizedPoints = points.map((point) =>
-          Math.max(0.02, Math.min(1, point)),
-        );
-
-        setWaveformPoints(normalizedPoints);
-      } catch {
-        setWaveformPoints([]);
-      } finally {
-        await audioContext.close();
-      }
-    };
-
-    void buildWaveformPoints();
-  }, [audioBlob]);
 
   useEffect(() => {
     const canvas = waveformCanvasRef.current;
