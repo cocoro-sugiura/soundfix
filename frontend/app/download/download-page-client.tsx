@@ -59,6 +59,7 @@ export default function DownloadPageClient({
   const [playbackProgress, setPlaybackProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [playableAudioUrl, setPlayableAudioUrl] = useState("");
 
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function DownloadPageClient({
 
     const buildPlayableAudioUrl = async () => {
       if (!audioUrl) {
+        setAudioBlob(null);
         setPlayableAudioUrl("");
         return;
       }
@@ -82,10 +84,12 @@ export default function DownloadPageClient({
         objectUrl = URL.createObjectURL(blob);
 
         if (!isCancelled) {
+          setAudioBlob(blob);
           setPlayableAudioUrl(objectUrl);
         }
       } catch {
         if (!isCancelled) {
+          setAudioBlob(null);
           setPlayableAudioUrl(audioUrl);
         }
       }
@@ -209,7 +213,7 @@ export default function DownloadPageClient({
 
   useEffect(() => {
     const buildWaveformPoints = async () => {
-      if (!audioUrl) {
+      if (!audioBlob) {
         setWaveformPoints([]);
         return;
       }
@@ -217,8 +221,7 @@ export default function DownloadPageClient({
       const audioContext = new window.AudioContext();
 
       try {
-        const response = await fetch(audioUrl);
-        const arrayBuffer = await response.arrayBuffer();
+        const arrayBuffer = await audioBlob.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         const channelData = audioBuffer.getChannelData(0);
         const blockSize = Math.max(
@@ -259,7 +262,7 @@ export default function DownloadPageClient({
     };
 
     void buildWaveformPoints();
-  }, [audioUrl]);
+  }, [audioBlob]);
 
   useEffect(() => {
     const canvas = waveformCanvasRef.current;
