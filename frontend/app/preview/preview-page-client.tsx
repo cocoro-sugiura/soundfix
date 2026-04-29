@@ -13,6 +13,7 @@ import {
 const PREVIEW_WAVEFORM_WIDTH = 960;
 const PREVIEW_WAVEFORM_HEIGHT = 96;
 const PREVIEW_WAVEFORM_SAMPLE_COUNT = 720;
+const PREVIEW_DURATION_SECONDS = 60;
 const BACKEND_BASE_URL =
   process.env.NEXT_PUBLIC_SOUNDFIX_BACKEND_URL || "http://localhost:8000";
 
@@ -60,7 +61,64 @@ export default function PreviewPageClient() {
   const [afterCurrentTime, setAfterCurrentTime] = useState(0);
   const [beforeDuration, setBeforeDuration] = useState(0);
   const [afterDuration, setAfterDuration] = useState(0);
+  const [beforePlayableAudioUrl, setBeforePlayableAudioUrl] = useState("");
   const [afterPlayableAudioUrl, setAfterPlayableAudioUrl] = useState("");
+
+  useEffect(() => {
+    let objectUrl = "";
+    let isCancelled = false;
+
+    const buildPlayableBeforeAudioUrl = async () => {
+      if (!previewFile) {
+        setBeforePlayableAudioUrl("");
+        return;
+      }
+
+      const audioContext = new window.AudioContext();
+
+      try {
+        const arrayBuffer = await previewFile.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        const duration = Math.min(PREVIEW_DURATION_SECONDS, audioBuffer.duration);
+        const frameCount = Math.floor(duration * audioBuffer.sampleRate);
+        const previewBuffer = audioContext.createBuffer(
+          audioBuffer.numberOfChannels,
+          frameCount,
+          audioBuffer.sampleRate,
+        );
+
+        for (let channel = 0; channel < audioBuffer.numberOfChannels; channel += 1) {
+          const sourceData = audioBuffer.getChannelData(channel);
+          const previewData = previewBuffer.getChannelData(channel);
+
+          previewData.set(sourceData.subarray(0, frameCount));
+        }
+
+        const wavBlob = encodeAudioBufferToWavBlob(previewBuffer);
+        objectUrl = URL.createObjectURL(wavBlob);
+
+        if (!isCancelled) {
+          setBeforePlayableAudioUrl(objectUrl);
+        }
+      } catch {
+        if (!isCancelled) {
+          setBeforePlayableAudioUrl(beforeAudioUrl);
+        }
+      } finally {
+        await audioContext.close();
+      }
+    };
+
+    void buildPlayableBeforeAudioUrl();
+
+    return () => {
+      isCancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [beforeAudioUrl, previewFile]);  
 
   useEffect(() => {
     let objectUrl = "";
@@ -206,7 +264,7 @@ export default function PreviewPageClient() {
       audioElement.removeEventListener("timeupdate", handleTimeUpdate);
       audioElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
-  }, [beforeAudioUrl]);
+  }, [beforePlayableAudioUrl]);
 
   useEffect(() => {
     const audioElement = afterAudioRef.current;
@@ -267,7 +325,11 @@ export default function PreviewPageClient() {
       try {
         const arrayBuffer = await previewFile.arrayBuffer();
         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        const channelData = audioBuffer.getChannelData(0);
+        const previewFrameCount = Math.min(
+          audioBuffer.length,
+          Math.floor(PREVIEW_DURATION_SECONDS * audioBuffer.sampleRate),
+        );
+        const channelData = audioBuffer.getChannelData(0).subarray(0, previewFrameCount);
         const blockSize = Math.max(
           1,
           Math.floor(channelData.length / PREVIEW_WAVEFORM_SAMPLE_COUNT),
@@ -552,6 +614,58 @@ export default function PreviewPageClient() {
     return isPlayingAfter ? "fa-solid fa-pause" : "fa-solid fa-play";
   }, [isPlayingAfter]);
 
+  const encodeAudioBufferToWavBlob = (audioBuffer: AudioBuffer) => {
+    const channelCount = audioBuffer.numberOfChannels;
+    const sampleRate = audioBuffer.sampleRate;
+    const sampleCount = audioBuffer.length;
+    const bytesPerSample = 2;
+    const blockAlign = channelCount * bytesPerSample;
+    const byteRate = sampleRate * blockAlign;
+    const dataSize = sampleCount * blockAlign;
+    const buffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buffer);
+
+    const writeString = (offset: number, value: string) => {
+      for (let index = 0; index < value.length; index += 1) {
+        view.setUint8(offset + index, value.charCodeAt(index));
+      }
+    };
+
+    writeString(0, "RIFF");
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(8, "WAVE");
+    writeString(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, channelCount, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bytesPerSample * 8, true);
+    writeString(36, "data");
+    view.setUint32(40, dataSize, true);
+
+    let offset = 44;
+
+    for (let index = 0; index < sampleCount; index += 1) {
+      for (let channel = 0; channel < channelCount; channel += 1) {
+        const sample = Math.max(
+          -1,
+          Math.min(1, audioBuffer.getChannelData(channel)[index]),
+        );
+
+        view.setInt16(
+          offset,
+          sample < 0 ? sample * 0x8000 : sample * 0x7fff,
+          true,
+        );
+        offset += bytesPerSample;
+      }
+    }
+
+    return new Blob([buffer], { type: "audio/wav" });
+  };  
+
   const formatPlaybackTime = (timeInSeconds: number) => {
     if (!Number.isFinite(timeInSeconds) || timeInSeconds < 0) {
       return "00:00";
@@ -570,7 +684,7 @@ export default function PreviewPageClient() {
     const audioElement = beforeAudioRef.current;
     const afterAudioElement = afterAudioRef.current;
 
-    if (!audioElement || !beforeAudioUrl) {
+    if (!audioElement || !beforePlayableAudioUrl) {
       return;
     }
 
@@ -768,14 +882,14 @@ export default function PreviewPageClient() {
                   </div>
 
                   <div className="mt-4 flex items-center gap-4">
-                    {beforeAudioUrl ? (
-                      <audio ref={beforeAudioRef} src={beforeAudioUrl} preload="metadata" />
+                    {beforePlayableAudioUrl ? (
+                      <audio ref={beforeAudioRef} src={beforePlayableAudioUrl} preload="metadata" />
                     ) : null}
 
                     <button
                       type="button"
                       onClick={handleToggleBeforePlayback}
-                      disabled={!beforeAudioUrl}
+                      disabled={!beforePlayableAudioUrl}
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-sm text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <i className={beforeButtonIconClassName} aria-hidden="true" />
