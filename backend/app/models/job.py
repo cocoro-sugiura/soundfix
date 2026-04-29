@@ -19,5 +19,7 @@ class JobRecord(BaseModel):
     input_path: str
     preview_path: str | None = None
     full_path: str | None = None
+    preview_waveform: list[float] | None = None
+    full_waveform: list[float] | None = None
     status: JobStatus
     error: str | None = None

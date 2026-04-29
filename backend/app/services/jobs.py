@@ -35,6 +35,8 @@ def update_job_paths(
     job_id: str,
     preview_path: str | None = None,
     full_path: str | None = None,
+    preview_waveform: list[float] | None = None,
+    full_waveform: list[float] | None = None,
 ) -> JobRecord:
     record = load_job_record(job_id)
 
@@ -43,6 +45,12 @@ def update_job_paths(
 
     if full_path is not None:
         record.full_path = full_path
+
+    if preview_waveform is not None:
+        record.preview_waveform = preview_waveform
+
+    if full_waveform is not None:
+        record.full_waveform = full_waveform
 
     save_job_record(record)
     return record

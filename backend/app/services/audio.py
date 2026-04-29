@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import NamedTuple
 
 import librosa
 import numpy as np
@@ -9,6 +10,10 @@ from app.core.config import FULL_DIR, PREVIEW_DIR
 PREVIEW_DURATION_SECONDS = 60
 OUTPUT_SAMPLE_RATE = 44100
 OUTPUT_FORMAT = "WAV"
+
+class ProcessedAudio(NamedTuple):
+    path: Path
+    waveform: list[float]
 
 
 def _load_audio(input_path: Path) -> tuple[np.ndarray, int]:
@@ -44,6 +49,32 @@ def _soft_restore_audio(audio: np.ndarray) -> np.ndarray:
     return np.clip(restored, -1.0, 1.0)
 
 
+def create_waveform_points(audio: np.ndarray, sample_count: int = 720) -> list[float]:
+    if audio.ndim == 2:
+        mono_audio = np.mean(audio, axis=0)
+    else:
+        mono_audio = audio
+
+    if mono_audio.size == 0:
+        return []
+
+    block_size = max(1, mono_audio.size // sample_count)
+    points: list[float] = []
+
+    for index in range(sample_count):
+        start = index * block_size
+        end = min(start + block_size, mono_audio.size)
+
+        if start >= mono_audio.size:
+            points.append(0.02)
+            continue
+
+        peak = float(np.max(np.abs(mono_audio[start:end])))
+        points.append(max(0.02, min(1.0, peak)))
+
+    return points
+
+
 def _write_audio(output_path: Path, audio: np.ndarray, sample_rate: int) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -59,22 +90,28 @@ def _write_audio(output_path: Path, audio: np.ndarray, sample_rate: int) -> Path
     return output_path
 
 
-def create_preview_audio(job_id: str, input_path: str) -> Path:
+def create_preview_audio(job_id: str, input_path: str) -> ProcessedAudio:
     source_path = Path(input_path)
     output_path = PREVIEW_DIR / f"{job_id}_preview.wav"
 
     audio, sample_rate = _load_audio(source_path)
     preview_audio = _limit_preview_duration(audio, sample_rate)
     restored_audio = _soft_restore_audio(preview_audio)
+    waveform = create_waveform_points(restored_audio)
 
-    return _write_audio(output_path, restored_audio, sample_rate)
+    output_file_path = _write_audio(output_path, restored_audio, sample_rate)
+
+    return ProcessedAudio(path=output_file_path, waveform=waveform)
 
 
-def create_full_audio(job_id: str, input_path: str) -> Path:
+def create_full_audio(job_id: str, input_path: str) -> ProcessedAudio:
     source_path = Path(input_path)
     output_path = FULL_DIR / f"{job_id}_full.wav"
 
     audio, sample_rate = _load_audio(source_path)
     restored_audio = _soft_restore_audio(audio)
+    waveform = create_waveform_points(restored_audio)
 
-    return _write_audio(output_path, restored_audio, sample_rate)
+    output_file_path = _write_audio(output_path, restored_audio, sample_rate)
+
+    return ProcessedAudio(path=output_file_path, waveform=waveform)

@@ -60,8 +60,12 @@ def start_preview(job_id: str) -> dict[str, str]:
     update_job_status(job_id, JobStatus.PREVIEW_PROCESSING)
 
     try:
-        preview_path = create_preview_audio(job_id, record.input_path)
-        update_job_paths(job_id, preview_path=str(preview_path))
+        preview_audio = create_preview_audio(job_id, record.input_path)
+        update_job_paths(
+            job_id,
+            preview_path=str(preview_audio.path),
+            preview_waveform=preview_audio.waveform,
+        )
         updated_record = update_job_status(job_id, JobStatus.PREVIEW_READY)
     except Exception as exc:
         update_job_status(job_id, JobStatus.FAILED, error=str(exc))
@@ -92,8 +96,12 @@ def start_full(job_id: str) -> dict[str, str]:
     update_job_status(job_id, JobStatus.FULL_PROCESSING)
 
     try:
-        full_path = create_full_audio(job_id, record.input_path)
-        update_job_paths(job_id, full_path=str(full_path))
+        full_audio = create_full_audio(job_id, record.input_path)
+        update_job_paths(
+            job_id,
+            full_path=str(full_audio.path),
+            full_waveform=full_audio.waveform,
+        )
         updated_record = update_job_status(job_id, JobStatus.FULL_READY)
     except Exception as exc:
         update_job_status(job_id, JobStatus.FAILED, error=str(exc))
@@ -117,6 +125,8 @@ def get_job_status(job_id: str) -> dict[str, str | None]:
         "status": record.status.value,
         "previewUrl": f"/jobs/{job_id}/preview/file" if record.preview_path else None,
         "fullUrl": f"/jobs/{job_id}/full/file" if record.full_path else None,
+        "previewWaveform": record.preview_waveform,
+        "fullWaveform": record.full_waveform,
         "error": record.error,
     }
 
