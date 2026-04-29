@@ -69,7 +69,7 @@ def start_preview(job_id: str) -> dict[str, str]:
         updated_record = update_job_status(job_id, JobStatus.PREVIEW_READY)
     except Exception as exc:
         update_job_status(job_id, JobStatus.FAILED, error=str(exc))
-        raise HTTPException(status_code=500, detail="Preview processing failed") from exc
+        raise HTTPException(status_code=500, detail=f"Preview processing failed: {exc}") from exc
 
     return {
         "jobId": updated_record.job_id,
@@ -105,7 +105,7 @@ def start_full(job_id: str) -> dict[str, str]:
         updated_record = update_job_status(job_id, JobStatus.FULL_READY)
     except Exception as exc:
         update_job_status(job_id, JobStatus.FAILED, error=str(exc))
-        raise HTTPException(status_code=500, detail="Full processing failed") from exc
+        raise HTTPException(status_code=500, detail=f"Full processing failed: {exc}") from exc
 
     return {
         "jobId": updated_record.job_id,
@@ -114,7 +114,7 @@ def start_full(job_id: str) -> dict[str, str]:
 
 
 @router.get("/{job_id}")
-def get_job_status(job_id: str) -> dict[str, str | None]:
+def get_job_status(job_id: str) -> dict[str, str | list[float] | None]:
     try:
         record = get_job(job_id)
     except FileNotFoundError as exc:
