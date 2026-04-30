@@ -31,13 +31,16 @@ image = (
         "ninja-build",
     )
     .pip_install(
+        "torch==2.3.0",
+        "torchaudio==2.3.0",
+        "torchvision==0.18.0",
+        index_url="https://download.pytorch.org/whl/cu121",
+    )
+    .pip_install(
         "numpy==1.26.4",
         "soundfile==0.12.1",
         "librosa==0.10.2.post1",
         "scipy==1.11.4",
-        "torch",
-        "torchaudio",
-        "torchvision",
         "einops",
         "omegaconf",
         "timm",
@@ -54,6 +57,7 @@ image = (
         "python --version",
         "nvcc --version",
         "echo CUDA_HOME=$CUDA_HOME",
+        "python - <<'PY'\nimport torch\nprint('torch', torch.__version__)\nprint('torch cuda', torch.version.cuda)\nPY",
         "git clone https://github.com/ghnmqdtg/VM-ASR.git /opt/vmasr",
         "pip install -r /opt/vmasr/requirements.txt",
         "cd /opt/vmasr/kernels/selective_scan && pip install . --no-build-isolation",
