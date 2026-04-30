@@ -137,12 +137,47 @@ def _enhance_vocal_clarity(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     presence_band = _soft_limit_audio(presence_band, drive=1.15)
     air_band = _soft_limit_audio(air_band, drive=1.25)
 
-    presence_amount = 0.32
-    air_amount = 0.24
+    presence_amount = 0.24
+    air_amount = 0.14
 
     enhanced = audio + presence_band * presence_amount + air_band * air_amount
 
     return enhanced.astype(np.float32)
+
+
+def _reduce_high_band_noise(audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    from scipy.signal import butter, sosfiltfilt
+    from scipy.ndimage import median_filter
+
+    if audio.size == 0 or sample_rate <= 0:
+        return audio
+
+    high_start_hz = 6500
+    nyquist = sample_rate / 2
+
+    if high_start_hz >= nyquist:
+        return audio
+
+    sos = butter(
+        2,
+        high_start_hz / nyquist,
+        btype="highpass",
+        output="sos",
+    )
+
+    high_band = sosfiltfilt(sos, audio).astype(np.float32)
+
+    filter_size = max(3, int(sample_rate * 0.0015))
+    if filter_size % 2 == 0:
+        filter_size += 1
+
+    smoothed_high = median_filter(high_band, size=filter_size, mode="nearest").astype(np.float32)
+    smoothed_high = _soft_limit_audio(smoothed_high, drive=1.20)
+
+    noise_reduce_amount = 0.35
+    controlled_high = high_band * (1.0 - noise_reduce_amount) + smoothed_high * noise_reduce_amount
+
+    return (audio - high_band + controlled_high).astype(np.float32)
 
 
 def _level_for_remix(audio: np.ndarray) -> np.ndarray:
@@ -284,10 +319,11 @@ def _restore_with_soundfix_preview(
             (0, target_samples - restored.shape[0]),
         )
 
-    wet_amount = 0.50
+    wet_amount = 0.42
     mixed = original_resampled * (1.0 - wet_amount) + restored * wet_amount
 
     mixed = _smooth_high_band(mixed, output_sample_rate)
+    mixed = _reduce_high_band_noise(mixed, output_sample_rate)
     mixed = _enhance_vocal_clarity(mixed, output_sample_rate)
     mixed = _level_for_remix(mixed)
 
