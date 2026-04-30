@@ -46,16 +46,35 @@ def _get_bigvgan_model():
     if "/opt/bigvgan" not in sys.path:
         sys.path.insert(0, "/opt/bigvgan")
 
-    import bigvgan
+    import json
+    from huggingface_hub import hf_hub_download
+    from env import AttrDict
+    from bigvgan import BigVGAN
 
     print("[soundfix] loading BigVGAN model", flush=True)
 
-    model = bigvgan.BigVGAN.from_pretrained(
-        "nvidia/bigvgan_v2_44khz_128band_256x",
-        use_cuda_kernel=False,
-        proxies=None,
-        resume_download=None,
+    repo_id = "nvidia/bigvgan_v2_44khz_128band_256x"
+
+    config_path = hf_hub_download(
+        repo_id=repo_id,
+        filename="config.json",
     )
+    checkpoint_path = hf_hub_download(
+        repo_id=repo_id,
+        filename="bigvgan_generator.pt",
+    )
+
+    with open(config_path, "r", encoding="utf-8") as config_file:
+        config = AttrDict(json.load(config_file))
+
+    model = BigVGAN(config, use_cuda_kernel=False)
+
+    checkpoint = torch.load(checkpoint_path, map_location="cpu")
+
+    if "generator" in checkpoint:
+        checkpoint = checkpoint["generator"]
+
+    model.load_state_dict(checkpoint, strict=True)
 
     model.remove_weight_norm()
     model = model.eval().to("cuda" if torch.cuda.is_available() else "cpu")
