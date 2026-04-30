@@ -245,7 +245,6 @@ def _restore_with_soundfix_preview(
     mixed = original_resampled * (1.0 - wet_amount) + restored * wet_amount
 
     mixed = _smooth_high_band(mixed, output_sample_rate)
-    mixed = _repair_pumping_envelope(mixed, output_sample_rate)
     mixed = _level_for_remix(mixed)
 
     restored_audio = np.stack([mixed, mixed], axis=0)
