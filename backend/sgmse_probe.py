@@ -13,17 +13,55 @@ app = modal.App("soundfix-sgmse-probe")
 SGMSE_EARS_WHAM_GDOWN_ID = "1t_DLLk8iPH6nj8M5wGeOP3jFPaz3i7K5"
 
 image = (
-    modal.Image.debian_slim(python_version="3.11")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.1.1-devel-ubuntu22.04",
+        add_python="3.11",
+    )
     .apt_install(
         "ffmpeg",
         "git",
         "libsndfile1",
         "sox",
+        "build-essential",
+        "ninja-build",
+        "g++",
+    )
+    .env(
+        {
+            "CUDA_HOME": "/usr/local/cuda",
+            "CC": "gcc",
+            "CXX": "g++",
+        }
+    )
+    .pip_install(
+        "torch==2.3.0",
+        "torchaudio==2.3.0",
+        "torchvision==0.18.0",
+        index_url="https://download.pytorch.org/whl/cu121",
     )
     .pip_install(
         "gdown",
+        "numpy==1.26.4",
+        "soundfile==0.12.1",
+        "librosa==0.10.2.post1",
+        "scipy==1.11.4",
+        "matplotlib",
+        "pytorch-lightning",
+        "torch-ema",
+        "wandb",
+        "torchsde",
+        "pesq",
+        "pystoi",
+        "packaging",
+        "ninja",
+        "wheel",
+        "setuptools",
     )
     .run_commands(
+        "python --version",
+        "nvcc --version",
+        "echo CUDA_HOME=$CUDA_HOME",
+        "python -c \"import torch; print('torch', torch.__version__); print('torch cuda', torch.version.cuda)\"",
         "git clone https://github.com/sp-uhh/sgmse.git /opt/sgmse",
         "pip install -r /opt/sgmse/requirements.txt",
         f"mkdir -p /opt/sgmse/checkpoints && gdown {SGMSE_EARS_WHAM_GDOWN_ID} -O /opt/sgmse/checkpoints/ears_wham.ckpt",
