@@ -102,6 +102,49 @@ def _smooth_high_band(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     return (audio - high_band + smoothed_high * 0.85).astype(np.float32)
 
 
+def _enhance_vocal_clarity(audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    from scipy.signal import butter, sosfiltfilt
+
+    if audio.size == 0 or sample_rate <= 0:
+        return audio
+
+    nyquist = sample_rate / 2
+
+    presence_low_hz = 3000
+    presence_high_hz = 8000
+    air_low_hz = 8000
+    air_high_hz = 16000
+
+    if presence_high_hz >= nyquist or air_high_hz >= nyquist:
+        return audio
+
+    presence_sos = butter(
+        2,
+        [presence_low_hz / nyquist, presence_high_hz / nyquist],
+        btype="bandpass",
+        output="sos",
+    )
+    air_sos = butter(
+        2,
+        [air_low_hz / nyquist, air_high_hz / nyquist],
+        btype="bandpass",
+        output="sos",
+    )
+
+    presence_band = sosfiltfilt(presence_sos, audio).astype(np.float32)
+    air_band = sosfiltfilt(air_sos, audio).astype(np.float32)
+
+    presence_band = _soft_limit_audio(presence_band, drive=1.15)
+    air_band = _soft_limit_audio(air_band, drive=1.25)
+
+    presence_amount = 0.32
+    air_amount = 0.24
+
+    enhanced = audio + presence_band * presence_amount + air_band * air_amount
+
+    return enhanced.astype(np.float32)
+
+
 def _level_for_remix(audio: np.ndarray) -> np.ndarray:
     if audio.size == 0:
         return audio
@@ -241,10 +284,11 @@ def _restore_with_soundfix_preview(
             (0, target_samples - restored.shape[0]),
         )
 
-    wet_amount = 0.35
+    wet_amount = 0.50
     mixed = original_resampled * (1.0 - wet_amount) + restored * wet_amount
 
     mixed = _smooth_high_band(mixed, output_sample_rate)
+    mixed = _enhance_vocal_clarity(mixed, output_sample_rate)
     mixed = _level_for_remix(mixed)
 
     restored_audio = np.stack([mixed, mixed], axis=0)
