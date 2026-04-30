@@ -30,6 +30,7 @@ image = (
         "build-essential",
         "ninja-build",
         "g++",
+        "sox",
     )
     .env(
         {
@@ -114,7 +115,7 @@ def reconstruct_with_vmasr_bytes(audio_bytes: bytes) -> bytes:
             "--output",
             str(output_root),
             "--tag",
-            "soundfix_probe",
+            "24000_48000",
         ]
 
         print(
