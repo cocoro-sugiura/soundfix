@@ -24,6 +24,7 @@ image = (
         "torchaudio",
         "torchvision",
         "huggingface_hub",
+        "matplotlib",
     )
     .run_commands(
         "git clone https://github.com/NVIDIA/BigVGAN.git /opt/bigvgan"
@@ -52,6 +53,8 @@ def _get_bigvgan_model():
     model = bigvgan.BigVGAN.from_pretrained(
         "nvidia/bigvgan_v2_44khz_128band_256x",
         use_cuda_kernel=False,
+        proxies=None,
+        resume_download=None,
     )
 
     model.remove_weight_norm()
