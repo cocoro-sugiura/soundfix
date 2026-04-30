@@ -77,11 +77,22 @@ image = (
 )
 
 
-def _find_latest_wav(root: Path) -> Path:
-    wav_paths = list(root.rglob("*.wav"))
+def _find_latest_wav(roots: list[Path], exclude_paths: set[Path]) -> Path:
+    wav_paths = []
+
+    for root in roots:
+        if root.exists():
+            wav_paths.extend(root.rglob("*.wav"))
+
+    wav_paths = [
+        path
+        for path in wav_paths
+        if path.resolve() not in exclude_paths
+    ]
 
     if not wav_paths:
-        raise FileNotFoundError(f"No wav output found under {root}")
+        searched_roots = ", ".join(str(root) for root in roots)
+        raise FileNotFoundError(f"No wav output found under {searched_roots}")
 
     return max(wav_paths, key=lambda path: path.stat().st_mtime)
 
@@ -145,7 +156,14 @@ def reconstruct_with_vmasr_bytes(audio_bytes: bytes) -> bytes:
                 f"returncode={completed.returncode}"
             )
 
-        output_path = _find_latest_wav(output_root)
+        output_path = _find_latest_wav(
+            roots=[
+                output_root,
+                temp_path,
+                Path("/opt/vmasr"),
+            ],
+            exclude_paths={input_path.resolve()},
+        )
 
         with open(output_path, "rb") as output_file:
             output_audio_bytes = output_file.read()
