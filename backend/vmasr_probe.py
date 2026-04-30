@@ -45,6 +45,10 @@ image = (
         "yacs",
         "tensorboard",
         "wandb",
+        "packaging",
+        "ninja",
+        "wheel",
+        "setuptools",
     )
     .run_commands(
         "python --version",
@@ -52,7 +56,7 @@ image = (
         "echo CUDA_HOME=$CUDA_HOME",
         "git clone https://github.com/ghnmqdtg/VM-ASR.git /opt/vmasr",
         "pip install -r /opt/vmasr/requirements.txt",
-        "cd /opt/vmasr/kernels/selective_scan && pip install .",
+        "cd /opt/vmasr/kernels/selective_scan && pip install . --no-build-isolation",
         f"wget -O /tmp/DualStreamInteractiveMambaUNet.zip {MODEL_ZIP_URL}",
         "mkdir -p /opt/vmasr/logs",
         "unzip -q /tmp/DualStreamInteractiveMambaUNet.zip -d /opt/vmasr/logs",
