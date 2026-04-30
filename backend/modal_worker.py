@@ -289,8 +289,6 @@ def _restore_with_soundfix_preview(
     if peak > 0:
         audio_mono = audio_mono / peak * 0.95
 
-    audio_mono = _repair_clicky_artifacts(audio_mono, sample_rate)
-
     with TemporaryDirectory() as temp_dir:
         input_path = Path(temp_dir) / "input.wav"
 
