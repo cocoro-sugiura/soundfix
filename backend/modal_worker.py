@@ -199,9 +199,9 @@ def _synthesize_vocal_air(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     nyquist = sample_rate / 2
 
     source_low_hz = 3500
-    source_high_hz = 9500
-    air_low_hz = 9000
-    air_high_hz = 17500
+    source_high_hz = 8500
+    air_low_hz = 9500
+    air_high_hz = 18000
 
     if source_high_hz >= nyquist or air_high_hz >= nyquist:
         return audio
@@ -221,16 +221,25 @@ def _synthesize_vocal_air(audio: np.ndarray, sample_rate: int) -> np.ndarray:
 
     source_band = sosfiltfilt(source_sos, audio).astype(np.float32)
 
-    generated = np.tanh(source_band * 4.5).astype(np.float32)
-    generated = generated - source_band * 0.25
+    rectified = np.abs(source_band).astype(np.float32)
+    rectified = rectified - float(np.mean(rectified))
+
+    saturated = np.tanh(source_band * 6.0).astype(np.float32)
+    generated = rectified * 0.65 + saturated * 0.35
 
     air_band = sosfiltfilt(air_sos, generated).astype(np.float32)
-    air_band = _soft_limit_audio(air_band, drive=1.15)
+    air_band = _soft_limit_audio(air_band, drive=1.10)
 
-    air_amount = 0.22
+    air_peak = float(np.max(np.abs(air_band))) if air_band.size > 0 else 0.0
+    audio_peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+
+    if air_peak > 0 and audio_peak > 0:
+        air_band = air_band / air_peak * audio_peak
+
+    air_amount = 0.18
     enhanced = audio + air_band * air_amount
 
-    return enhanced.astype(np.float32)    
+    return enhanced.astype(np.float32)
 
 
 def _reduce_high_band_noise(audio: np.ndarray, sample_rate: int) -> np.ndarray:
