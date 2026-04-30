@@ -299,25 +299,30 @@ def restore_audio_bytes(audio_bytes: bytes) -> bytes:
 
 
 @app.local_entrypoint()
-def main():
-    sample_rate = 44100
-    duration_seconds = 10
-    t = np.linspace(0, duration_seconds, int(sample_rate * duration_seconds), endpoint=False)
+def main(input_path: str = "", output_path: str = "audiosr_preview_output.wav"):
+    if input_path:
+        with open(input_path, "rb") as input_file:
+            input_audio_bytes = input_file.read()
+    else:
+        sample_rate = 44100
+        duration_seconds = 10
+        t = np.linspace(0, duration_seconds, int(sample_rate * duration_seconds), endpoint=False)
 
-    test_audio = (
-        0.12 * np.sin(2 * np.pi * 110 * t)
-        + 0.08 * np.sin(2 * np.pi * 440 * t)
-        + 0.04 * np.sin(2 * np.pi * 1760 * t)
-        + 0.015 * np.random.default_rng(42).normal(size=t.shape)
-    )
+        test_audio = (
+            0.12 * np.sin(2 * np.pi * 110 * t)
+            + 0.08 * np.sin(2 * np.pi * 440 * t)
+            + 0.04 * np.sin(2 * np.pi * 1760 * t)
+            + 0.015 * np.random.default_rng(42).normal(size=t.shape)
+        )
 
-    test_audio = np.asarray(test_audio, dtype=np.float32)
-    test_audio = np.clip(test_audio, -1.0, 1.0)
+        test_audio = np.asarray(test_audio, dtype=np.float32)
+        test_audio = np.clip(test_audio, -1.0, 1.0)
 
-    input_buffer = BytesIO()
-    sf.write(input_buffer, test_audio, sample_rate, format="WAV")
+        input_buffer = BytesIO()
+        sf.write(input_buffer, test_audio, sample_rate, format="WAV")
+        input_audio_bytes = input_buffer.getvalue()
 
-    output_audio_bytes = restore_audio_bytes.remote(input_buffer.getvalue())
+    output_audio_bytes = restore_audio_bytes.remote(input_audio_bytes)
 
     output_audio, output_sample_rate = sf.read(BytesIO(output_audio_bytes), always_2d=True)
 
@@ -328,3 +333,8 @@ def main():
             "output_duration_seconds": float(output_audio.shape[0] / output_sample_rate),
         }
     )
+
+    with open(output_path, "wb") as output_file:
+        output_file.write(output_audio_bytes)
+
+    print(f"Saved output to {output_path}")
