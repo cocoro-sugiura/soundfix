@@ -94,6 +94,7 @@ def reconstruct_with_sgmse_bytes(audio_bytes: bytes) -> bytes:
 
         noisy_dir.mkdir(parents=True, exist_ok=True)
         enhanced_dir.mkdir(parents=True, exist_ok=True)
+        (enhanced_dir / "noisy").mkdir(parents=True, exist_ok=True)
 
         input_path = noisy_dir / "input.wav"
 
