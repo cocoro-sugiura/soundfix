@@ -1,4 +1,6 @@
 from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from time import perf_counter
 
 import modal
@@ -34,11 +36,116 @@ image = (
         "ftfy",
         "pandas",
         "timm",
+        "matplotlib",
+        "torchcodec",
     )
     .run_commands(
         "git clone https://github.com/haoheliu/versatile_audio_super_resolution.git /opt/audiosr"
     )
 )
+
+_AUDIOSR_MODEL = None
+
+def _get_audiosr_model():
+    global _AUDIOSR_MODEL
+
+    if _AUDIOSR_MODEL is not None:
+        return _AUDIOSR_MODEL
+
+    import sys
+
+    if "/opt/audiosr" not in sys.path:
+        sys.path.insert(0, "/opt/audiosr")
+
+    import audiosr
+
+    print("[soundfix] loading AudioSR model", flush=True)
+
+    _AUDIOSR_MODEL = audiosr.build_model(
+        model_name="basic",
+        device="auto",
+    )
+
+    print("[soundfix] AudioSR model loaded", flush=True)
+
+    return _AUDIOSR_MODEL
+
+
+def _restore_with_audiosr_preview(
+    audio: np.ndarray,
+    sample_rate: int,
+) -> tuple[np.ndarray, int]:
+    import sys
+
+    if "/opt/audiosr" not in sys.path:
+        sys.path.insert(0, "/opt/audiosr")
+
+    import audiosr
+
+    max_preview_seconds = 60
+    max_preview_samples = int(sample_rate * max_preview_seconds)
+
+    if audio.shape[1] > max_preview_samples:
+        audio = audio[:, :max_preview_samples]
+
+    if audio.shape[0] > 1:
+        audio_mono = np.mean(audio, axis=0)
+    else:
+        audio_mono = audio[0]
+
+    audio_mono = np.asarray(audio_mono, dtype=np.float32)
+
+    peak = float(np.max(np.abs(audio_mono))) if audio_mono.size > 0 else 0.0
+
+    if peak > 0:
+        audio_mono = audio_mono / peak * 0.95
+
+    with TemporaryDirectory() as temp_dir:
+        input_path = Path(temp_dir) / "input.wav"
+
+        sf.write(
+            input_path,
+            audio_mono,
+            sample_rate,
+            format="WAV",
+        )
+
+        latent_diffusion = _get_audiosr_model()
+
+        restored = audiosr.super_resolution(
+            latent_diffusion,
+            str(input_path),
+            seed=42,
+            ddim_steps=25,
+            guidance_scale=3.5,
+        )
+
+    if hasattr(restored, "detach"):
+        restored = restored.detach().cpu().numpy()
+
+    restored = np.asarray(restored, dtype=np.float32)
+    restored = np.squeeze(restored)
+
+    if restored.ndim > 1:
+        restored = restored.reshape(-1)
+
+    output_sample_rate = 48000
+    original_duration_seconds = audio.shape[1] / sample_rate if sample_rate > 0 else 0
+    target_samples = int(output_sample_rate * original_duration_seconds)
+
+    if target_samples > 0 and restored.shape[0] > target_samples:
+        restored = restored[:target_samples]
+
+    restored_peak = float(np.max(np.abs(restored))) if restored.size > 0 else 0.0
+
+    if restored_peak > 0:
+        restored = restored / restored_peak * 0.95
+
+    restored = np.clip(restored, -1.0, 1.0)
+
+    restored_audio = np.stack([restored, restored], axis=0)
+
+    return restored_audio, output_sample_rate
 
 
 @app.function(
@@ -102,6 +209,9 @@ def check_audiosr_environment() -> dict:
         result["audiosr_import_ok"] = True
         audiosr_version = getattr(audiosr, "__version__", None)
         result["audiosr_version"] = str(audiosr_version) if audiosr_version is not None else None
+        result["audiosr_attrs"] = [
+            name for name in dir(audiosr) if not name.startswith("_")
+        ][:80]
     except Exception as error:
         result["audiosr_import_error"] = repr(error)
 
@@ -149,12 +259,24 @@ def restore_audio_bytes(audio_bytes: bytes) -> bytes:
 
     restore_started_at = perf_counter()
 
-    peak = np.max(np.abs(audio))
+    try:
+        audio, sample_rate = _restore_with_audiosr_preview(audio, sample_rate)
+        restore_mode = "audiosr_preview"
+    except Exception as error:
+        print(
+            "[soundfix] audiosr preview failed "
+            f"error={repr(error)} "
+            "fallback=normalize",
+            flush=True,
+        )
 
-    if peak > 0:
-        audio = audio / peak * 0.95
+        peak = np.max(np.abs(audio))
 
-    audio = np.clip(audio, -1.0, 1.0)
+        if peak > 0:
+            audio = audio / peak * 0.95
+
+        audio = np.clip(audio, -1.0, 1.0)
+        restore_mode = "normalize_fallback"
 
     restore_seconds = perf_counter() - restore_started_at
 
@@ -166,6 +288,7 @@ def restore_audio_bytes(audio_bytes: bytes) -> bytes:
 
     print(
         "[soundfix] restore completed "
+        f"mode={restore_mode} "
         f"restore_seconds={restore_seconds:.3f} "
         f"total_seconds={total_seconds:.3f} "
         f"output_size_bytes={len(output_audio_bytes)}",
@@ -177,5 +300,31 @@ def restore_audio_bytes(audio_bytes: bytes) -> bytes:
 
 @app.local_entrypoint()
 def main():
-    result = check_audiosr_environment.remote()
-    print(result)
+    sample_rate = 44100
+    duration_seconds = 10
+    t = np.linspace(0, duration_seconds, int(sample_rate * duration_seconds), endpoint=False)
+
+    test_audio = (
+        0.12 * np.sin(2 * np.pi * 110 * t)
+        + 0.08 * np.sin(2 * np.pi * 440 * t)
+        + 0.04 * np.sin(2 * np.pi * 1760 * t)
+        + 0.015 * np.random.default_rng(42).normal(size=t.shape)
+    )
+
+    test_audio = np.asarray(test_audio, dtype=np.float32)
+    test_audio = np.clip(test_audio, -1.0, 1.0)
+
+    input_buffer = BytesIO()
+    sf.write(input_buffer, test_audio, sample_rate, format="WAV")
+
+    output_audio_bytes = restore_audio_bytes.remote(input_buffer.getvalue())
+
+    output_audio, output_sample_rate = sf.read(BytesIO(output_audio_bytes), always_2d=True)
+
+    print(
+        {
+            "output_sample_rate": int(output_sample_rate),
+            "output_shape": tuple(output_audio.shape),
+            "output_duration_seconds": float(output_audio.shape[0] / output_sample_rate),
+        }
+    )
