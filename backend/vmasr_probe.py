@@ -57,7 +57,7 @@ image = (
         "python --version",
         "nvcc --version",
         "echo CUDA_HOME=$CUDA_HOME",
-        "python - <<'PY'\nimport torch\nprint('torch', torch.__version__)\nprint('torch cuda', torch.version.cuda)\nPY",
+        "python -c \"import torch; print('torch', torch.__version__); print('torch cuda', torch.version.cuda)\"",
         "git clone https://github.com/ghnmqdtg/VM-ASR.git /opt/vmasr",
         "pip install -r /opt/vmasr/requirements.txt",
         "cd /opt/vmasr/kernels/selective_scan && pip install . --no-build-isolation",
