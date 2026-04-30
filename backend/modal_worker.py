@@ -110,10 +110,10 @@ def _enhance_vocal_clarity(audio: np.ndarray, sample_rate: int) -> np.ndarray:
 
     nyquist = sample_rate / 2
 
-    presence_low_hz = 3000
-    presence_high_hz = 8000
-    air_low_hz = 8000
-    air_high_hz = 16000
+    presence_low_hz = 3500
+    presence_high_hz = 7500
+    air_low_hz = 10000
+    air_high_hz = 14500
 
     if presence_high_hz >= nyquist or air_high_hz >= nyquist:
         return audio
@@ -137,8 +137,8 @@ def _enhance_vocal_clarity(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     presence_band = _soft_limit_audio(presence_band, drive=1.15)
     air_band = _soft_limit_audio(air_band, drive=1.25)
 
-    presence_amount = 0.24
-    air_amount = 0.14
+    presence_amount = 0.18
+    air_amount = 0.28
 
     enhanced = audio + presence_band * presence_amount + air_band * air_amount
 
@@ -215,7 +215,7 @@ def _level_for_remix(audio: np.ndarray) -> np.ndarray:
         return audio
 
     rms = float(np.sqrt(np.mean(np.square(audio)) + 1e-8))
-    target_rms = 0.16
+    target_rms = 0.12
 
     if rms > 0:
         gain = min(target_rms / rms, 2.2)
