@@ -89,14 +89,12 @@ def reconstruct_with_sgmse_bytes(audio_bytes: bytes) -> bytes:
     with TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         test_dir = temp_path / "test"
-        noisy_dir = test_dir / "noisy"
         enhanced_dir = temp_path / "enhanced"
 
-        noisy_dir.mkdir(parents=True, exist_ok=True)
+        test_dir.mkdir(parents=True, exist_ok=True)
         enhanced_dir.mkdir(parents=True, exist_ok=True)
-        (enhanced_dir / "noisy").mkdir(parents=True, exist_ok=True)
 
-        input_path = noisy_dir / "input.wav"
+        input_path = test_dir / "input.wav"
 
         audio, sample_rate = sf.read(BytesIO(audio_bytes), always_2d=True)
         sf.write(input_path, audio, sample_rate, format="WAV")
