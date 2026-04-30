@@ -38,6 +38,7 @@ image = (
         "timm",
         "matplotlib",
         "torchcodec",
+        "deepfilternet",
     )
     .run_commands(
         "git clone https://github.com/haoheliu/versatile_audio_super_resolution.git /opt/audiosr"
@@ -75,6 +76,50 @@ def _soft_limit_audio(audio: np.ndarray, drive: float = 1.15) -> np.ndarray:
     driven = audio * drive
     limited = np.tanh(driven) / np.tanh(drive)
     return limited.astype(np.float32)
+
+
+def _reduce_voice_noise(audio: np.ndarray, sample_rate: int) -> tuple[np.ndarray, int]:
+    import torch
+    import torchaudio
+    from df.enhance import enhance, init_df
+
+    if audio.size == 0 or sample_rate <= 0:
+        return audio, sample_rate
+
+    model, df_state, _ = init_df()
+    target_sample_rate = int(df_state.sr())
+
+    waveform = torch.from_numpy(audio).float().unsqueeze(0)
+
+    if sample_rate != target_sample_rate:
+        waveform = torchaudio.functional.resample(
+            waveform,
+            orig_freq=sample_rate,
+            new_freq=target_sample_rate,
+        )
+
+    with torch.no_grad():
+        denoised = enhance(
+            model,
+            df_state,
+            waveform,
+        )
+
+    denoised = denoised.squeeze(0).detach().cpu().numpy().astype(np.float32)
+
+    original_peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+    denoised_peak = float(np.max(np.abs(denoised))) if denoised.size > 0 else 0.0
+
+    if original_peak > 0 and denoised_peak > 0:
+        denoised = denoised / denoised_peak * original_peak
+
+    denoise_amount = 0.75
+    if sample_rate != target_sample_rate:
+        return denoised, target_sample_rate
+
+    mixed = audio * (1.0 - denoise_amount) + denoised * denoise_amount
+
+    return mixed.astype(np.float32), sample_rate
 
 
 def _smooth_high_band(audio: np.ndarray, sample_rate: int) -> np.ndarray:
@@ -288,6 +333,15 @@ def _restore_with_soundfix_preview(
 
     if peak > 0:
         audio_mono = audio_mono / peak * 0.95
+
+    denoise_started_at = perf_counter()
+    audio_mono, sample_rate = _reduce_voice_noise(audio_mono, sample_rate)
+    print(
+        "[soundfix] voice denoise completed "
+        f"seconds={perf_counter() - denoise_started_at:.3f} "
+        f"sample_rate={sample_rate}",
+        flush=True,
+    )
 
     with TemporaryDirectory() as temp_dir:
         input_path = Path(temp_dir) / "input.wav"
