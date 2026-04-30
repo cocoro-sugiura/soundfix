@@ -127,7 +127,7 @@ def reconstruct_with_vmasr_bytes(audio_bytes: bytes) -> bytes:
         completed = subprocess.run(
             command,
             cwd="/opt/vmasr",
-            check=True,
+            check=False,
             capture_output=True,
             text=True,
         )
@@ -137,6 +137,12 @@ def reconstruct_with_vmasr_bytes(audio_bytes: bytes) -> bytes:
 
         if completed.stderr:
             print(completed.stderr, flush=True)
+
+        if completed.returncode != 0:
+            raise RuntimeError(
+                "VM-ASR inference failed "
+                f"returncode={completed.returncode}"
+            )
 
         output_path = _find_latest_wav(output_root)
 
