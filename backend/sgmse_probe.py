@@ -63,6 +63,7 @@ image = (
         "echo CUDA_HOME=$CUDA_HOME",
         "python -c \"import torch; print('torch', torch.__version__); print('torch cuda', torch.version.cuda)\"",
         "git clone https://github.com/sp-uhh/sgmse.git /opt/sgmse",
+        "python -c \"from pathlib import Path; p=Path('/opt/sgmse/enhancement.py'); t=p.read_text(); t=t.replace('write(join(args.enhanced_dir, filename), x_hat.cpu().numpy(), target_sr)', 'write(join(args.enhanced_dir, filename), x_hat.cpu().numpy(), target_sr, format=\\\"WAV\\\")'); p.write_text(t)\"",
         "pip install -r /opt/sgmse/requirements.txt",
         f"mkdir -p /opt/sgmse/checkpoints && gdown {SGMSE_EARS_WHAM_GDOWN_ID} -O /opt/sgmse/checkpoints/ears_wham.ckpt",
     )
