@@ -136,14 +136,41 @@ def _restore_with_audiosr_preview(
     if target_samples > 0 and restored.shape[0] > target_samples:
         restored = restored[:target_samples]
 
-    restored_peak = float(np.max(np.abs(restored))) if restored.size > 0 else 0.0
+    from math import gcd
+    from scipy.signal import resample_poly
 
-    if restored_peak > 0:
-        restored = restored / restored_peak * 0.95
+    common_divisor = gcd(sample_rate, output_sample_rate)
+    up = output_sample_rate // common_divisor
+    down = sample_rate // common_divisor
 
-    restored = np.clip(restored, -1.0, 1.0)
+    original_resampled = resample_poly(audio_mono, up, down).astype(np.float32)
 
-    restored_audio = np.stack([restored, restored], axis=0)
+    if original_resampled.shape[0] > target_samples:
+        original_resampled = original_resampled[:target_samples]
+
+    if original_resampled.shape[0] < target_samples:
+        original_resampled = np.pad(
+            original_resampled,
+            (0, target_samples - original_resampled.shape[0]),
+        )
+
+    if restored.shape[0] < target_samples:
+        restored = np.pad(
+            restored,
+            (0, target_samples - restored.shape[0]),
+        )
+
+    wet_amount = 0.4
+    mixed = original_resampled * (1.0 - wet_amount) + restored * wet_amount
+
+    mixed_peak = float(np.max(np.abs(mixed))) if mixed.size > 0 else 0.0
+
+    if mixed_peak > 0:
+        mixed = mixed / mixed_peak * 0.95
+
+    mixed = np.clip(mixed, -1.0, 1.0)
+
+    restored_audio = np.stack([mixed, mixed], axis=0)
 
     return restored_audio, output_sample_rate
 
