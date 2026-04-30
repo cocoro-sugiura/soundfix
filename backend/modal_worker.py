@@ -182,8 +182,8 @@ def _enhance_vocal_clarity(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     presence_band = _soft_limit_audio(presence_band, drive=1.15)
     air_band = _soft_limit_audio(air_band, drive=1.25)
 
-    presence_amount = 0.16
-    air_amount = 0.18
+    presence_amount = 0.12
+    air_amount = 0.10
 
     enhanced = audio + presence_band * presence_amount + air_band * air_amount
 
@@ -191,6 +191,7 @@ def _enhance_vocal_clarity(audio: np.ndarray, sample_rate: int) -> np.ndarray:
 
 
 def _synthesize_vocal_air(audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    from scipy.ndimage import uniform_filter1d
     from scipy.signal import butter, sosfiltfilt
 
     if audio.size == 0 or sample_rate <= 0:
@@ -198,17 +199,25 @@ def _synthesize_vocal_air(audio: np.ndarray, sample_rate: int) -> np.ndarray:
 
     nyquist = sample_rate / 2
 
-    source_low_hz = 3500
-    source_high_hz = 8500
+    body_low_hz = 1800
+    body_high_hz = 5200
+    edge_low_hz = 4200
+    edge_high_hz = 9500
     air_low_hz = 9500
-    air_high_hz = 18000
+    air_high_hz = 18500
 
-    if source_high_hz >= nyquist or air_high_hz >= nyquist:
+    if edge_high_hz >= nyquist or air_high_hz >= nyquist:
         return audio
 
-    source_sos = butter(
+    body_sos = butter(
         2,
-        [source_low_hz / nyquist, source_high_hz / nyquist],
+        [body_low_hz / nyquist, body_high_hz / nyquist],
+        btype="bandpass",
+        output="sos",
+    )
+    edge_sos = butter(
+        2,
+        [edge_low_hz / nyquist, edge_high_hz / nyquist],
         btype="bandpass",
         output="sos",
     )
@@ -219,27 +228,42 @@ def _synthesize_vocal_air(audio: np.ndarray, sample_rate: int) -> np.ndarray:
         output="sos",
     )
 
-    source_band = sosfiltfilt(source_sos, audio).astype(np.float32)
+    body_band = sosfiltfilt(body_sos, audio).astype(np.float32)
+    edge_band = sosfiltfilt(edge_sos, audio).astype(np.float32)
 
-    rectified = np.abs(source_band).astype(np.float32)
-    rectified = rectified - float(np.mean(rectified))
+    body_harmonics = np.tanh(body_band * 7.0).astype(np.float32)
+    edge_harmonics = np.sign(edge_band) * np.sqrt(np.abs(edge_band) + 1e-8)
+    edge_harmonics = edge_harmonics.astype(np.float32)
 
-    saturated = np.tanh(source_band * 6.0).astype(np.float32)
-    generated = rectified * 0.65 + saturated * 0.35
+    generated = body_harmonics * 0.35 + edge_harmonics * 0.65
+    generated = generated - float(np.mean(generated))
 
     air_band = sosfiltfilt(air_sos, generated).astype(np.float32)
-    air_band = _soft_limit_audio(air_band, drive=1.10)
 
-    air_peak = float(np.max(np.abs(air_band))) if air_band.size > 0 else 0.0
-    audio_peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+    envelope_window = max(1, int(sample_rate * 0.018))
+    voice_envelope = uniform_filter1d(np.abs(body_band), size=envelope_window, mode="nearest")
+    envelope_peak = float(np.max(voice_envelope)) if voice_envelope.size > 0 else 0.0
 
-    if air_peak > 0 and audio_peak > 0:
-        air_band = air_band / air_peak * audio_peak
+    if envelope_peak > 0:
+        voice_mask = np.clip(voice_envelope / (envelope_peak * 0.45), 0.0, 1.0)
+    else:
+        voice_mask = np.ones_like(audio, dtype=np.float32)
 
-    air_amount = 0.18
+    voice_mask = uniform_filter1d(voice_mask.astype(np.float32), size=envelope_window, mode="nearest")
+
+    air_band = air_band * voice_mask
+    air_band = _soft_limit_audio(air_band, drive=1.08)
+
+    air_rms = float(np.sqrt(np.mean(np.square(air_band)) + 1e-8))
+    audio_rms = float(np.sqrt(np.mean(np.square(audio)) + 1e-8))
+
+    if air_rms > 0 and audio_rms > 0:
+        air_band = air_band / air_rms * audio_rms
+
+    air_amount = 0.26
     enhanced = audio + air_band * air_amount
 
-    return enhanced.astype(np.float32)
+    return np.clip(enhanced, -1.0, 1.0).astype(np.float32)
 
 
 def _reduce_high_band_noise(audio: np.ndarray, sample_rate: int) -> np.ndarray:
