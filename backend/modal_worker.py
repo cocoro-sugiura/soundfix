@@ -71,7 +71,88 @@ def _get_audiosr_model():
     return _AUDIOSR_MODEL
 
 
-def _restore_with_audiosr_preview(
+def _soft_limit_audio(audio: np.ndarray, drive: float = 1.15) -> np.ndarray:
+    driven = audio * drive
+    limited = np.tanh(driven) / np.tanh(drive)
+    return limited.astype(np.float32)
+
+
+def _smooth_high_band(audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    from scipy.signal import butter, sosfiltfilt
+
+    if audio.size == 0 or sample_rate <= 0:
+        return audio
+
+    high_start_hz = 7500
+    nyquist = sample_rate / 2
+
+    if high_start_hz >= nyquist:
+        return audio
+
+    sos = butter(
+        2,
+        high_start_hz / nyquist,
+        btype="highpass",
+        output="sos",
+    )
+
+    high_band = sosfiltfilt(sos, audio).astype(np.float32)
+    smoothed_high = _soft_limit_audio(high_band, drive=1.35)
+
+    return (audio - high_band + smoothed_high * 0.85).astype(np.float32)
+
+
+def _level_for_remix(audio: np.ndarray) -> np.ndarray:
+    if audio.size == 0:
+        return audio
+
+    rms = float(np.sqrt(np.mean(np.square(audio)) + 1e-8))
+    target_rms = 0.16
+
+    if rms > 0:
+        gain = min(target_rms / rms, 2.2)
+        audio = audio * gain
+
+    audio = _soft_limit_audio(audio, drive=1.12)
+
+    peak = float(np.max(np.abs(audio))) if audio.size > 0 else 0.0
+
+    if peak > 0:
+        audio = audio / peak * 0.95
+
+    return np.clip(audio, -1.0, 1.0).astype(np.float32)
+
+
+def _repair_pumping_envelope(audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    from scipy.ndimage import maximum_filter1d, uniform_filter1d
+
+    if audio.size == 0 or sample_rate <= 0:
+        return audio
+
+    envelope = np.abs(audio).astype(np.float32)
+
+    short_window = max(1, int(sample_rate * 0.025))
+    long_window = max(short_window + 1, int(sample_rate * 0.350))
+
+    short_envelope = uniform_filter1d(envelope, size=short_window, mode="nearest")
+    long_envelope = maximum_filter1d(short_envelope, size=long_window, mode="nearest")
+
+    dip_ratio = long_envelope / (short_envelope + 1e-4)
+    dip_ratio = np.clip(dip_ratio, 1.0, 1.8)
+
+    gain = 1.0 + (dip_ratio - 1.0) * 0.22
+    gain = uniform_filter1d(gain, size=short_window, mode="nearest")
+    gain = np.clip(gain, 1.0, 1.18)
+
+    repaired = audio * gain
+
+    blend_amount = 0.35
+    repaired = audio * (1.0 - blend_amount) + repaired * blend_amount
+
+    return repaired.astype(np.float32)
+
+
+def _restore_with_soundfix_preview(
     audio: np.ndarray,
     sample_rate: int,
 ) -> tuple[np.ndarray, int]:
@@ -160,15 +241,12 @@ def _restore_with_audiosr_preview(
             (0, target_samples - restored.shape[0]),
         )
 
-    wet_amount = 0.4
+    wet_amount = 0.35
     mixed = original_resampled * (1.0 - wet_amount) + restored * wet_amount
 
-    mixed_peak = float(np.max(np.abs(mixed))) if mixed.size > 0 else 0.0
-
-    if mixed_peak > 0:
-        mixed = mixed / mixed_peak * 0.95
-
-    mixed = np.clip(mixed, -1.0, 1.0)
+    mixed = _smooth_high_band(mixed, output_sample_rate)
+    mixed = _repair_pumping_envelope(mixed, output_sample_rate)
+    mixed = _level_for_remix(mixed)
 
     restored_audio = np.stack([mixed, mixed], axis=0)
 
@@ -287,11 +365,11 @@ def restore_audio_bytes(audio_bytes: bytes) -> bytes:
     restore_started_at = perf_counter()
 
     try:
-        audio, sample_rate = _restore_with_audiosr_preview(audio, sample_rate)
-        restore_mode = "audiosr_preview"
+        audio, sample_rate = _restore_with_soundfix_preview(audio, sample_rate)
+        restore_mode = "soundfix_preview"
     except Exception as error:
         print(
-            "[soundfix] audiosr preview failed "
+            "[soundfix] soundfix preview failed "
             f"error={repr(error)} "
             "fallback=normalize",
             flush=True,
