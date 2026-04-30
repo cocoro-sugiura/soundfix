@@ -180,6 +180,36 @@ def _reduce_high_band_noise(audio: np.ndarray, sample_rate: int) -> np.ndarray:
     return (audio - high_band + controlled_high).astype(np.float32)
 
 
+def _repair_clicky_artifacts(audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    from scipy.ndimage import median_filter
+
+    if audio.size == 0 or sample_rate <= 0:
+        return audio
+
+    median_size = max(3, int(sample_rate * 0.00035))
+
+    if median_size % 2 == 0:
+        median_size += 1
+
+    smoothed = median_filter(audio, size=median_size, mode="nearest").astype(np.float32)
+    difference = audio - smoothed
+
+    threshold = max(
+        0.025,
+        float(np.percentile(np.abs(difference), 98.5)) * 1.8,
+    )
+
+    artifact_mask = np.abs(difference) > threshold
+
+    repaired = audio.copy()
+    repaired[artifact_mask] = smoothed[artifact_mask]
+
+    blend_amount = 0.65
+    repaired = audio * (1.0 - blend_amount) + repaired * blend_amount
+
+    return repaired.astype(np.float32)
+
+
 def _level_for_remix(audio: np.ndarray) -> np.ndarray:
     if audio.size == 0:
         return audio
@@ -258,6 +288,8 @@ def _restore_with_soundfix_preview(
 
     if peak > 0:
         audio_mono = audio_mono / peak * 0.95
+
+    audio_mono = _repair_clicky_artifacts(audio_mono, sample_rate)
 
     with TemporaryDirectory() as temp_dir:
         input_path = Path(temp_dir) / "input.wav"
