@@ -17,7 +17,10 @@ MODEL_ZIP_URL = (
 )
 
 image = (
-    modal.Image.debian_slim(python_version="3.10")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.1.1-devel-ubuntu22.04",
+        add_python="3.10",
+    )
     .apt_install(
         "ffmpeg",
         "git",
@@ -44,6 +47,9 @@ image = (
         "wandb",
     )
     .run_commands(
+        "python --version",
+        "nvcc --version",
+        "echo CUDA_HOME=$CUDA_HOME",
         "git clone https://github.com/ghnmqdtg/VM-ASR.git /opt/vmasr",
         "pip install -r /opt/vmasr/requirements.txt",
         "cd /opt/vmasr/kernels/selective_scan && pip install .",
