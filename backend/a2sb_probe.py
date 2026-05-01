@@ -157,6 +157,18 @@ def run_a2sb_probe(input_audio_bytes: bytes) -> bytes:
             "PATH/TO/SECOND/SPLIT.ckpt",
             str(checkpoint_files[1]),
         )
+        config_text = config_text.replace(
+            "  strategy: ddp",
+            "  strategy: auto",
+        )
+        config_text = config_text.replace(
+            "  plugins:\n    - class_path: lightning.fabric.plugins.environments.SLURMEnvironment\n      init_args:\n        auto_requeue: true\n        requeue_signal: null",
+            "  plugins: null",
+        )
+        config_text = config_text.replace(
+            "  use_distributed_sampler: true",
+            "  use_distributed_sampler: false",
+        )
         config_path.write_text(config_text)
 
         print(
