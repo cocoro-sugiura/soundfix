@@ -38,6 +38,7 @@ image = (
         "omegaconf",
         "torchcodec",
         "matplotlib",
+        "wandb",
     )
     .run_commands(
         "git clone https://github.com/ZFTurbo/Music-Source-Separation-Training.git /opt/msst || true",
