@@ -37,7 +37,7 @@ image = (
         "pytorch-lightning",
         "lightning",
         "rotary-embedding-torch",
-        "moviepy",
+        "moviepy==1.0.3",
     )
     .run_commands(
         "git clone https://github.com/NVIDIA/diffusion-audio-restoration.git /opt/a2sb || true",
