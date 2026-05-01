@@ -29,7 +29,7 @@ image = (
 def restore_with_spectral_model(
     input_audio_bytes: bytes,
     model_bytes: bytes,
-    residual_amount: float = 0.45,
+    residual_amount: float = 0.25,
 ) -> bytes:
     import numpy as np
     import soundfile as sf
@@ -106,7 +106,24 @@ def restore_with_spectral_model(
             x = logmag.unsqueeze(0).unsqueeze(0)
             predicted_log_residual = model(x).squeeze(0).squeeze(0)
 
-        restored_logmag = logmag + predicted_log_residual * float(residual_amount)
+        freq_bins = logmag.shape[0]
+        freqs = torch.linspace(0, sample_rate / 2, freq_bins, device=device)
+
+        band_mask = torch.zeros_like(freqs)
+        band_mask = torch.where((freqs >= 2000) & (freqs <= 12000), torch.ones_like(band_mask), band_mask)
+        band_mask = torch.where((freqs > 12000) & (freqs <= 15500), torch.ones_like(band_mask) * 0.25, band_mask)
+        band_mask = band_mask.view(-1, 1)
+
+        voice_energy = logmag[(freqs >= 250) & (freqs <= 5000)].mean(dim=0)
+        voice_floor = torch.quantile(voice_energy, 0.35)
+        voice_peak = torch.quantile(voice_energy, 0.95)
+        voice_mask = torch.clamp((voice_energy - voice_floor) / (voice_peak - voice_floor + 1e-6), 0.0, 1.0)
+        voice_mask = voice_mask.view(1, -1)
+
+        predicted_log_residual = torch.clamp(predicted_log_residual, min=-0.25, max=0.35)
+        controlled_residual = predicted_log_residual * band_mask * voice_mask
+
+        restored_logmag = logmag + controlled_residual * float(residual_amount)
         restored_logmag = torch.clamp(restored_logmag, min=0.0)
         restored_mag = torch.expm1(restored_logmag)
 
@@ -145,7 +162,7 @@ def main(
     input_path: str = "backend/test_acapella_ineedyourlove.mp3",
     model_path: str = "backend/spectral_residual_model.pt",
     output_path: str = "spectral_restored_ineedyourlove.wav",
-    residual_amount: float = 0.45,
+    residual_amount: float = 0.25,
 ):
     with open(input_path, "rb") as input_file:
         input_audio_bytes = input_file.read()
