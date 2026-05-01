@@ -44,6 +44,9 @@ image = (
         "mkdir -p /opt/a2sb/ssr_eval",
         "printf 'from . import metrics\\n' > /opt/a2sb/ssr_eval/__init__.py",
         "printf 'class AudioMetrics:\\n    def __init__(self, *args, **kwargs):\\n        pass\\n\\n    def evaluation(self, *args, **kwargs):\\n        return {}\\n' > /opt/a2sb/ssr_eval/metrics.py",
+        "mkdir -p /opt/a2sb/checkpoints",
+        "python - <<'PY'\nfrom huggingface_hub import snapshot_download\nsnapshot_download(repo_id='nvidia/audio_to_audio_schrodinger_bridge', local_dir='/opt/a2sb/checkpoints', local_dir_use_symlinks=False)\nPY",
+        "find /opt/a2sb/checkpoints -maxdepth 3 -type f | sort",
         "find /opt/a2sb -maxdepth 2 -type f | sort | head -200",
     )
 )
@@ -135,6 +138,34 @@ def run_a2sb_probe(input_audio_bytes: bytes) -> bytes:
 
         if not repo_path.exists():
             raise RuntimeError("A2SB repository was not cloned to /opt/a2sb")
+
+        checkpoint_files = sorted((repo_path / "checkpoints").rglob("*.ckpt"))
+
+        if len(checkpoint_files) < 2:
+            raise RuntimeError(
+                "A2SB checkpoints were not found. "
+                f"checkpoint_files={[str(path) for path in checkpoint_files]}"
+            )
+
+        config_path = repo_path / "configs" / "ensemble_2split_sampling.yaml"
+        config_text = config_path.read_text()
+        config_text = config_text.replace(
+            "PATH/TO/FIRST/SPLIT.ckpt",
+            str(checkpoint_files[0]),
+        )
+        config_text = config_text.replace(
+            "PATH/TO/SECOND/SPLIT.ckpt",
+            str(checkpoint_files[1]),
+        )
+        config_path.write_text(config_text)
+
+        print(
+            {
+                "a2sb_checkpoints": [str(path) for path in checkpoint_files],
+                "a2sb_config_path": str(config_path),
+            },
+            flush=True,
+        )
 
         command = [
             "python",
