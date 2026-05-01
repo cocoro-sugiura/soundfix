@@ -26,6 +26,12 @@ image = (
     image=image,
     gpu="L4",
     timeout=1200,
+    mounts=[
+        modal.Mount.from_local_dir(
+            "backend/data",
+            remote_path="/root/backend/data",
+        )
+    ],
 )
 def train_residual_probe() -> bytes:
     import torch
