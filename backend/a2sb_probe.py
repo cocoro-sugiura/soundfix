@@ -32,6 +32,11 @@ image = (
         "tqdm",
         "matplotlib",
         "huggingface_hub",
+        "pyyaml",
+        "jsonargparse[signatures]",
+        "pytorch-lightning",
+        "rotary-embedding-torch",
+        "ssr-eval",
     )
     .run_commands(
         "git clone https://github.com/NVIDIA/diffusion-audio-restoration.git /opt/a2sb || true",
@@ -127,61 +132,27 @@ def run_a2sb_probe(input_audio_bytes: bytes) -> bytes:
         if not repo_path.exists():
             raise RuntimeError("A2SB repository was not cloned to /opt/a2sb")
 
-        candidate_commands = [
-            [
-                "python",
-                "inference.py",
-                "--input",
-                str(input_path),
-                "--output",
-                str(output_path),
-            ],
-            [
-                "python",
-                "enhance.py",
-                "--input",
-                str(input_path),
-                "--output",
-                str(output_path),
-            ],
-            [
-                "python",
-                "sample.py",
-                "--input",
-                str(input_path),
-                "--output",
-                str(output_path),
-            ],
+        command = [
+            "python",
+            "A2SB_upsample_api.py",
+            "-f",
+            str(input_path),
+            "-o",
+            str(output_path),
+            "-n",
+            "25",
         ]
 
-        last_error = None
-
-        for command in candidate_commands:
-            try:
-                _run_command(command, cwd=str(repo_path))
-                if output_path.exists():
-                    break
-            except Exception as error:
-                last_error = error
-                print(
-                    {
-                        "candidate_failed": command,
-                        "error": repr(error),
-                    },
-                    flush=True,
-                )
+        _run_command(command, cwd=str(repo_path / "inference"))
 
         if not output_path.exists():
             wav_outputs = sorted(temp_path.rglob("*.wav"))
 
-            if len(wav_outputs) == 1:
-                output_path = wav_outputs[0]
-            else:
-                raise RuntimeError(
-                    "A2SB probe did not produce an output wav. "
-                    f"last_error={repr(last_error)} "
-                    f"temp_wavs={[str(path) for path in wav_outputs]}"
-                )
+            raise RuntimeError(
+                "A2SB probe did not produce the expected output wav. "
+                f"expected_output={str(output_path)} "
+                f"temp_wavs={[str(path) for path in wav_outputs]}"
+            )
 
         audio, sample_rate = sf.read(output_path, always_2d=True)
 
