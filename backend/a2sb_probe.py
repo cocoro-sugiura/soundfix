@@ -45,7 +45,7 @@ image = (
         "printf 'from . import metrics\\n' > /opt/a2sb/ssr_eval/__init__.py",
         "printf 'class AudioMetrics:\\n    def __init__(self, *args, **kwargs):\\n        pass\\n\\n    def evaluation(self, *args, **kwargs):\\n        return {}\\n' > /opt/a2sb/ssr_eval/metrics.py",
         "mkdir -p /opt/a2sb/checkpoints",
-        "python - <<'PY'\nfrom huggingface_hub import snapshot_download\nsnapshot_download(repo_id='nvidia/audio_to_audio_schrodinger_bridge', local_dir='/opt/a2sb/checkpoints', local_dir_use_symlinks=False)\nPY",
+        "python -c \"from huggingface_hub import snapshot_download; snapshot_download(repo_id='nvidia/audio_to_audio_schrodinger_bridge', local_dir='/opt/a2sb/checkpoints', local_dir_use_symlinks=False)\"",
         "find /opt/a2sb/checkpoints -maxdepth 3 -type f | sort",
         "find /opt/a2sb -maxdepth 2 -type f | sort | head -200",
     )
