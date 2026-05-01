@@ -17,6 +17,7 @@ image = (
         "demucs",
         "numpy==1.26.4",
         "soundfile==0.12.1",
+        "torchcodec",
     )
 )
 
