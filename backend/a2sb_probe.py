@@ -41,6 +41,9 @@ image = (
     )
     .run_commands(
         "git clone https://github.com/NVIDIA/diffusion-audio-restoration.git /opt/a2sb || true",
+        "mkdir -p /opt/a2sb/ssr_eval",
+        "printf 'from . import metrics\\n' > /opt/a2sb/ssr_eval/__init__.py",
+        "printf 'class AudioMetrics:\\n    def __init__(self, *args, **kwargs):\\n        pass\\n\\n    def evaluation(self, *args, **kwargs):\\n        return {}\\n' > /opt/a2sb/ssr_eval/metrics.py",
         "find /opt/a2sb -maxdepth 2 -type f | sort | head -200",
     )
 )
