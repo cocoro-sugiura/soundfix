@@ -29,7 +29,7 @@ image = (
 @app.function(
     image=image,
     gpu="L4",
-    timeout=1200,
+    timeout=1800,
 )
 def train_residual_probe() -> bytes:
     import torch
@@ -74,7 +74,7 @@ def train_residual_probe() -> bytes:
     model = Simple1D().to(device)
     opt = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    for epoch in range(80):
+    for epoch in range(30):
         total = 0.0
 
         for inp, tgt in zip(inputs, targets):
