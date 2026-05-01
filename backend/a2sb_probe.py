@@ -113,7 +113,7 @@ def inspect_a2sb_environment() -> dict:
     gpu="L4",
     timeout=1800,
 )
-def run_a2sb_probe(input_audio_bytes: bytes) -> bytes:
+def run_a2sb_probe(input_audio_bytes: bytes, cutoff_freq: int | None = None) -> bytes:
     import soundfile as sf
 
     started_at = perf_counter()
@@ -138,6 +138,24 @@ def run_a2sb_probe(input_audio_bytes: bytes) -> bytes:
 
         if not repo_path.exists():
             raise RuntimeError("A2SB repository was not cloned to /opt/a2sb")
+
+        api_path = repo_path / "inference" / "A2SB_upsample_api.py"
+
+        if cutoff_freq is not None:
+            api_text = api_path.read_text()
+            api_text = api_text.replace(
+                "cutoff_freq = compute_rolloff_freq(audio_filename, roll_percent=0.99)",
+                f"cutoff_freq = {int(cutoff_freq)}",
+            )
+            api_path.write_text(api_text)
+
+            print(
+                {
+                    "a2sb_manual_cutoff_freq": int(cutoff_freq),
+                    "a2sb_api_path": str(api_path),
+                },
+                flush=True,
+            )
 
         checkpoint_files = sorted((repo_path / "checkpoints").rglob("*.ckpt"))
 
@@ -192,22 +210,43 @@ def run_a2sb_probe(input_audio_bytes: bytes) -> bytes:
 
         _run_command(command, cwd=str(repo_path / "inference"))
 
-        if not output_path.exists():
-            wav_outputs = sorted(temp_path.rglob("*.wav"))
+        temp_wav_outputs = sorted(temp_path.rglob("*.wav"))
+        repo_wav_outputs = sorted(repo_path.rglob("*.wav"))
 
+        print(
+            {
+                "expected_output_exists": output_path.exists(),
+                "temp_wav_outputs": [str(path) for path in temp_wav_outputs],
+                "repo_wav_outputs": [str(path) for path in repo_wav_outputs[-50:]],
+            },
+            flush=True,
+        )
+
+        if not output_path.exists():
             raise RuntimeError(
                 "A2SB probe did not produce the expected output wav. "
                 f"expected_output={str(output_path)} "
-                f"temp_wavs={[str(path) for path in wav_outputs]}"
+                f"temp_wavs={[str(path) for path in temp_wav_outputs]} "
+                f"repo_wavs={[str(path) for path in repo_wav_outputs[-50:]]}"
             )
 
         audio, sample_rate = sf.read(output_path, always_2d=True)
+
+        import librosa
+
+        output_mono = audio[:, 0] if audio.ndim > 1 else audio
+        output_rolloff = librosa.feature.spectral_rolloff(
+            y=output_mono.astype("float32"),
+            sr=sample_rate,
+            roll_percent=0.99,
+        )[0]
 
         print(
             {
                 "output_path": str(output_path),
                 "output_shape": tuple(audio.shape),
                 "output_sample_rate": int(sample_rate),
+                "output_rolloff_99_mean_hz": int(output_rolloff.mean()),
                 "elapsed_seconds": float(perf_counter() - started_at),
             },
             flush=True,
@@ -221,6 +260,7 @@ def main(
     input_path: str = "backend/test_acapella_ineedyourlove.mp3",
     output_path: str = "a2sb_ineedyourlove.wav",
     inspect_only: bool = False,
+    cutoff_freq: int | None = None,
 ):
     if inspect_only:
         result = inspect_a2sb_environment.remote()
@@ -230,7 +270,7 @@ def main(
     with open(input_path, "rb") as input_file:
         input_audio_bytes = input_file.read()
 
-    output_audio_bytes = run_a2sb_probe.remote(input_audio_bytes)
+    output_audio_bytes = run_a2sb_probe.remote(input_audio_bytes, cutoff_freq)
 
     with open(output_path, "wb") as output_file:
         output_file.write(output_audio_bytes)
