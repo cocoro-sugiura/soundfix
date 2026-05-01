@@ -35,6 +35,7 @@ image = (
         "pyyaml",
         "jsonargparse[signatures]",
         "pytorch-lightning",
+        "lightning",
         "rotary-embedding-torch",
     )
     .run_commands(
